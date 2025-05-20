@@ -71,8 +71,8 @@ const destroyImage = async (publicId, resource_type = 'image') => {
 };
 
 const upload = multer({ storage }).fields([
-    { name: 'productImage', maxCount: 1 },
-    { name: 'productPdf', maxCount: 1 },
+    { name: 'productImage'},
+    { name: 'productPdf' },
     { name: 'pdf', maxCount: 1 },
     { name: 'banner', maxCount: 1 }
 ]);

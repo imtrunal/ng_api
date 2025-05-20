@@ -33,7 +33,7 @@ module.exports.authorization = async (req, res, next) => {
         if (!user) {
             return errorResponse(req, res, 401, "Permission denied");
         }
-        req.user = user; // Store user info in the request for further use
+        req.user = user; 
         next();
     } catch (error) {
         console.log(error);

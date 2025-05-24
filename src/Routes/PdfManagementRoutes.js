@@ -4,6 +4,4 @@ const { getPDF} = require('../controller/PdfManagement');
 
 router.get('/get-url/:shortUrl', getPDF);
 
-
-
 module.exports = router;

@@ -2,98 +2,96 @@ const productService = require('../Service/productService');
 const status = require('http-status');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 const { getCloudinaryPublicId, destroyImage } = require('../utils/upload');
+const { incrementTotalCount, decrementTotalCount } = require('../utils/updateStatistics');
 
 const addProduct = async (req, res) => {
   try {
-    const rawProductData = JSON.parse(req.body.productData); // could be array or object
-    const products = Array.isArray(rawProductData) ? rawProductData : [rawProductData];
+    const productsData = JSON.parse(req.body.productData);
+    const allImages = req.files?.productImage || [];
+    const allPdfs = req.files?.productPdf || [];
+    const allVideos = req.files?.productVideo || [];
 
-    const imageFiles = req.files?.productImage || [];
-    const pdfFiles = req.files?.productPdf || [];
-
-    const createdProducts = [];
-
-    for (let i = 0; i < products.length; i++) {
-      const { title, category, subCategory, price, material, moq } = products[i];
-
-      if (!title || !category || !subCategory || !price) {
-        return errorResponse(req, res, status.BAD_REQUEST, `Missing fields in product at index ${i}`);
+    let imageIndex = 0;
+    let pdfIndex = 0;
+    let videoIndex = 0;
+    
+    const productPromises = productsData.map(productData => {
+      const productImages = [];
+      // Assign images
+      for (let i = 0; i < (productData.imageCount || 0); i++) {
+        if (imageIndex < allImages.length) {
+          productImages.push(allImages[imageIndex++]);
+        }
       }
+      
+      // Assign PDF if needed
+      const productPdf = productData.hasPdf && pdfIndex < allPdfs.length 
+        ? allPdfs[pdfIndex++] 
+        : null;
+      
+      // Assign video if needed
+      const productVideo = productData.hasVideo && videoIndex < allVideos.length 
+        ? allVideos[videoIndex++] 
+        : null;
 
-      if (isNaN(price)) {
-        return errorResponse(req, res, status.BAD_REQUEST, `Price must be a number in product at index ${i}`);
-      }
+      return productService.createProduct({
+        productData,
+        imageFiles: productImages,
+        pdfFile: productPdf,
+        videoFile: productVideo
+      });
+    });
 
-      const imageFile = imageFiles[i] || null;
-      const pdfFile = pdfFiles[i] || null;
+    const createdProducts = await Promise.all(productPromises);
+    await incrementTotalCount('totalProducts', createdProducts.length);
 
-      if (!imageFile && !pdfFile) {
-        return errorResponse(req, res, status.BAD_REQUEST, `Upload either image or pdf for product at index ${i}`);
-      }
-
-      const productData = { title, category, subCategory, price, material, moq };
-      const newProduct = await productService.createProduct({ productData, imageFile, pdfFile });
-
-      if (!newProduct) {
-        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, `Failed to add product at index ${i}`);
-      }
-
-      createdProducts.push(newProduct);
-    }
-
-    return successResponse(req, res, status.CREATED, "Product(s) added successfully", { products: createdProducts });
+    return successResponse(
+      req,
+      res,
+      status.OK,
+      "Products added successfully",
+      { products: createdProducts }
+    );
 
   } catch (error) {
-    console.error(error);
+    console.error("Add Product Error:", error);
     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
   }
 };
 
-
 const updateProduct = async (req, res) => {
   try {
     const productId = req.params.id;
-    const { title, category, subCategory, price, material, moq } = JSON.parse(req.body.productData);
-    const imageFile = req.files?.productImage?.[0];
-    const pdfFile = req.files?.productPdf?.[0];
+    const productData = JSON.parse(req.body.productData);
+    const imageFiles = req.files?.productImage || [];
+    const pdfFile = req.files?.productPdf?.[0] || null;
+    const videoFile = req.files?.productVideo?.[0] || null;
 
-    if (!productId) {
-      return errorResponse(req, res, status.BAD_REQUEST, "Product ID is required");
-    }
-
-    if (price && isNaN(price)) {
-      return errorResponse(req, res, status.BAD_REQUEST, "Price must be a number");
-    }
-
-    const updatedFields = {};
-    if (title) updatedFields.title = title;
-    if (category) updatedFields.category = category;
-    if (subCategory) updatedFields.subCategory = subCategory;
-    if (price) updatedFields.price = price;
-    if (material) updatedFields.material = material;
-    if (moq) updatedFields.moq = moq;
-
-    const updatedProduct = await productService.update({
+    const updatedProduct = await productService.updateProduct({
       productId,
-      updatedFields,
-      imageFile,
-      pdfFile
+      productData,
+      imageFiles,
+      pdfFile,
+      videoFile
     });
 
-    if (!updatedProduct) {
-      return errorResponse(req, res, status.NOT_FOUND, "Product not found or update failed");
-    }
+    return successResponse(
+      req,
+      res,
+      status.OK,
+      "Product updated successfully",
+      { product: updatedProduct }
+    );
 
-    return successResponse(req, res, status.OK, "Product updated successfully", { updatedProduct });
   } catch (error) {
-    console.error(error);
+    console.error("Update Product Error:", error);
     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
   }
 };
 
 const getAllProduct = async (req, res) => {
   try {
-    const products = await productService.findAll(); // make sure category and subCategory populated
+    const products = await productService.findAll();
 
     const catalogData = {};
     products.forEach(product => {
@@ -110,16 +108,7 @@ const getAllProduct = async (req, res) => {
 
       catalogData[categoryId][subCategoryId].push({
         id: product._id,
-        title: product.title,
-        price: product.price,
-        material: product.material,
-        moq: product.moq,
-        image: product.image?.url || '',
-        pdf: product.pdf || '',
-        category: product.category,      // full category object here
-        subCategory: product.subCategory, // full subCategory object here
-        createdAt: product.createdAt,
-        updatedAt: product.updatedAt,
+        ...product
       });
     });
 
@@ -155,19 +144,35 @@ const deleteProduct = async (req, res) => {
     if (!product) {
       return errorResponse(req, res, status.NOT_FOUND, "Product not found");
     }
-    if (product.image || product.pdf) {
-      const fileUrl = product.image?.url || product.pdf?.url;
-      const resourceType = product.image ? 'image' : 'raw';
-      const publicID = getCloudinaryPublicId(fileUrl);
 
-      if (publicID) {
-        await destroyImage(publicID, resourceType);
-      }
+    const deletionPromises = [];
+
+    if (product.image && product.image.length > 0) {
+      product.image.forEach(img => {
+        if (img.url) {
+          const id = getCloudinaryPublicId(img.url);
+          if (id) deletionPromises.push(destroyImage(id, 'image'));
+        }
+      });
     }
+
+    if (product.pdf?.url) {
+      const pdfId = getCloudinaryPublicId(product.pdf.url);
+      if (pdfId) deletionPromises.push(destroyImage(pdfId, 'raw'));
+    }
+
+    if (product.video?.url) {
+      const videoId = getCloudinaryPublicId(product.video.url);
+      if (videoId) deletionPromises.push(destroyImage(videoId, 'video'));
+    }
+
+    await Promise.all(deletionPromises);
+
     await productService.deleteOne(product._id);
+    await decrementTotalCount('totalProducts', -1);
     return successResponse(req, res, status.OK, "Product deleted successfully");
   } catch (error) {
-    console.log(error);
+    console.error("Error deleting product:", error);
     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
   }
 }

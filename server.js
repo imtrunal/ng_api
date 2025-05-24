@@ -9,6 +9,9 @@ const cors = require('cors');
 const { connectDb } = require('./src/config/db');
 const fs = require("fs");
 const axios = require("axios");
+const { upload } = require('./src/utils/upload');
+const { successResponse, errorResponse } = require('./src/utils/apiResponse');
+const { default: status } = require('http-status');
 
 connectDb();
 app.use(cors({
@@ -237,6 +240,16 @@ app.post("/unique-convert", (req, res) => {
     res.json({ convertedText });
 });
 
+app.post("/upload", upload, (req, res) => {
+    try {
+        const file = req.files.attachedFiles[0];
+        return successResponse(req, res, status.OK, "File uploaded successfully", { url: file.path });
+    } catch (error) {
+        console.error("Error uploading file:", error);
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, "File upload failed");
+    }
+});
+
 
 //Routes
 app.use("/admin", require("./src/Routes/AdminrRoutes"));
@@ -244,6 +257,10 @@ app.use("/pdfs", require("./src/Routes/PdfManagementRoutes"));
 app.use("/banners", require("./src/Routes/BannerManagementRoutes"));
 app.use("/products", require("./src/Routes/ProductManagementRoutes"));
 app.use("/category", require("./src/Routes/CategoryListRoutes"));
+app.use("/clients", require("./src/Routes/ClientsManagement"));
+app.use("/colors", require("./src/Routes/ColorRoutes"));
+app.use("/shapes", require("./src/Routes/ShapeRoutes"));
+
 
 
 app.listen(PORT, () => console.log(`Server is running on ${PORT}`));

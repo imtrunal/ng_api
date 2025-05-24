@@ -20,13 +20,17 @@ const productSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    image: {
+    image: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ImageFiles'
-    },
+    }],
     pdf: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'PDFfiles'
+    },
+    video: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'VideoFiles'
     },
     material: {
         type: String
@@ -34,7 +38,15 @@ const productSchema = new mongoose.Schema({
     moq: {
         type: Number,
         default: 1
-    }
+    },
+    color: {
+        type: String,
+        default: ''
+    },
+    shape: {
+        type: String,
+        default: ''
+    },
 }, {
     timestamps: true
 });

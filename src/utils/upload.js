@@ -3,42 +3,48 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const { cloudinary } = require("../config/cloudinary");
 require("dotenv").config();
 
+const folderConfigs = {
+    'productImage': {
+        folder: 'products/images',
+        resource_type: 'image',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
+    },
+    'productPdf': {
+        folder: 'products/pdfs',
+        resource_type: 'raw',
+        allowed_formats: ['pdf'],
+        format: 'pdf'
+    },
+    'productVideo': {
+        folder: 'products/videos',
+        resource_type: 'video',
+        allowed_formats: ['mp4', 'mov', 'avi', 'webm']
+    },
+    'clientLogo': {
+        folder: 'clients',
+        resource_type: 'image',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
+    },
+    'banner': {
+        folder: 'banners',
+        resource_type: 'image',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
+    }
+};
+
 const storage = new CloudinaryStorage({
     cloudinary,
-    params: async (req, file) => {
-        let config = {
+    params: (req, file) => {
+        const config = {
             public_id: file.originalname.replace(/\.[^/.]+$/, ""),
+            ...(folderConfigs[file.fieldname] || {
+                folder: 'attachedFiles',
+                resource_type: 'auto'
+            })
         };
-        console.log("file.fieldname", file.fieldname);
-
-        switch (file.fieldname) {
-            case 'productImage':
-                config.folder = 'products';
-                config.resource_type = 'image';
-                config.allowed_formats = ['jpg', 'jpeg', 'png', 'webp'];
-                config.format = "raw"
-                break;
-
-            case 'productPdf':
-                config.folder = 'products';
-                config.resource_type = 'raw';
-                config.allowed_formats = ['pdf'];
-                config.format = 'pdf';
-                break;
-
-            case 'banner':
-                config.folder = 'banners';
-                config.resource_type = 'image';
-                config.allowed_formats = ['jpg', 'jpeg', 'png', 'webp'];
-                break;
-
-            default:
-                config.folder = 'misc';
-                config.resource_type = 'auto';
-        }
 
         return config;
-    },
+    }
 });
 
 
@@ -71,10 +77,13 @@ const destroyImage = async (publicId, resource_type = 'image') => {
 };
 
 const upload = multer({ storage }).fields([
-    { name: 'productImage'},
+    { name: 'productImage', maxCount: 20 },
     { name: 'productPdf' },
+    { name: 'productVideo' },
+    { name: 'clientLogo', maxCount: 50 },
     { name: 'pdf', maxCount: 1 },
-    { name: 'banner', maxCount: 1 }
+    { name: 'banner', maxCount: 1 },
+    { name: 'attachedFiles', maxCount: 1 },
 ]);
 
 module.exports = { upload, getCloudinaryPublicId, destroyImage };

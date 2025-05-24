@@ -1,87 +1,245 @@
-const ImageFiles = require("../Model/image");
+const ImageFiles = require("../Model/imageFiles");
 const PdfFiles = require("../Model/pdfFiles");
 const Products = require("../Model/product");
+const VideoFiles = require("../Model/videoFiles");
+const { getCloudinaryPublicId, destroyImage } = require("../utils/upload");
 
-module.exports.createProduct = async ({ productData, imageFile, pdfFile }) => {
+module.exports.createProduct = async ({ productData, imageFiles, pdfFile, videoFile }) => {
     try {
-        let imageDoc = null;
+        const imageDocs = [];
         let pdfDoc = null;
+        let videoDoc = null;
 
         const tasks = [];
 
-        if (imageFile) {
-            const image = new ImageFiles({
-                filename: imageFile.originalname,
-                url: imageFile.path,
-            });
-            tasks.push(image.save().then((saved) => { imageDoc = saved; }));
+        if (imageFiles && imageFiles.length > 0) {
+            for (const img of imageFiles) {
+                if (img) {
+                    const image = new ImageFiles({
+                        filename: img.originalname,
+                        url: img.path,
+                    });
+                    tasks.push(
+                        image.save().then(saved => {
+                            imageDocs.push(saved._id);
+                        })
+                    );
+                }
+            }
         }
 
         if (pdfFile) {
             const pdf = new PdfFiles({
+                filename: pdfFile.originalname,
                 url: pdfFile.path,
+                short: productData.title
             });
-            tasks.push(pdf.save().then((saved) => { pdfDoc = saved; }));
+            tasks.push(
+                pdf.save().then(saved => {
+                    pdfDoc = saved._id;
+                })
+            );
+        }
+
+        if (videoFile) {
+            const video = new VideoFiles({
+                filename: videoFile.originalname,
+                url: videoFile.path,
+            });
+            tasks.push(
+                video.save().then(saved => {
+                    videoDoc = saved._id;
+                })
+            );
         }
 
         await Promise.all(tasks);
 
+        // Create the product with references to all files
         const product = new Products({
             ...productData,
-            image: imageDoc?._id || null,
-            pdf: pdfDoc?._id || null,
+            image: imageDocs,
+            pdf: pdfDoc,
+            video: videoDoc,
         });
 
         await product.save();
         return product;
     } catch (error) {
-        throw new Error(error);
+        console.error("Error in createProduct:", error);
+        throw new Error(error.message || "Failed to create product");
     }
 };
 
-module.exports.update = async ({ productId, updatedFields, imageFile, pdfFile }) => {
+module.exports.updateProduct = async ({
+    productId,
+    productData,
+    imageFiles,
+    pdfFile,
+    videoFile
+}) => {
     try {
-        let imageDoc = null;
-        let pdfDoc = null;
+        const existingProduct = await Products.findById(productId);
+        if (!existingProduct) {
+            throw new Error("Product not found");
+        }
 
         const tasks = [];
+        const cloudinaryDeletions = [];
+        let newImageIds = [...existingProduct.image];
+        let newPdfId = existingProduct.pdf;
+        let newVideoId = existingProduct.video;
 
-        if (imageFile) {
-            const image = new ImageFiles({
-                filename: imageFile.originalname,
-                url: imageFile.path,
+        // Helper function to add Cloudinary deletion tasks
+        const addCloudinaryDeletion = async (file, resourceType = 'image') => {
+            if (file && file.url) {
+                const publicId = getCloudinaryPublicId(file.url);
+                if (publicId) {
+                    cloudinaryDeletions.push(destroyImage(publicId, resourceType));
+                }
+            }
+        };
+
+        if (imageFiles && imageFiles.length > 0) {
+            if (productData.imagesToDelete && productData.imagesToDelete.length > 0) {
+                // Find the images to be deleted
+                const imagesToDelete = await ImageFiles.find({
+                    _id: { $in: productData.imagesToDelete }
+                });
+
+                // Add Cloudinary deletion tasks
+                for (const img of imagesToDelete) {
+                    await addCloudinaryDeletion(img);
+                }
+
+                // Add database deletion task
+                tasks.push(
+                    ImageFiles.deleteMany({ _id: { $in: productData.imagesToDelete } })
+                );
+
+                newImageIds = newImageIds.filter(
+                    imgId => !productData.imagesToDelete.includes(imgId.toString())
+                );
+            }
+
+            // Add new images
+            for (const img of imageFiles) {
+                if (img) {
+                    const image = new ImageFiles({
+                        filename: img.originalname,
+                        url: img.path,
+                    });
+                    tasks.push(
+                        image.save().then(saved => {
+                            newImageIds.push(saved._id);
+                        })
+                    );
+                }
+            }
+        } else if (productData.imagesToDelete && productData.imagesToDelete.length > 0) {
+            // Find the images to be deleted
+            const imagesToDelete = await ImageFiles.find({
+                _id: { $in: productData.imagesToDelete }
             });
-            tasks.push(image.save().then(saved => { imageDoc = saved; }));
+
+            // Add Cloudinary deletion tasks
+            for (const img of imagesToDelete) {
+                await addCloudinaryDeletion(img);
+            }
+
+            // Add database deletion task
+            tasks.push(
+                ImageFiles.deleteMany({ _id: { $in: productData.imagesToDelete } })
+            );
+
+            newImageIds = newImageIds.filter(
+                imgId => !productData.imagesToDelete.includes(imgId.toString())
+            );
         }
 
         if (pdfFile) {
+            // Delete existing PDF from Cloudinary and DB if exists
+            if (existingProduct.pdf) {
+                const existingPdf = await PdfFiles.findById(existingProduct.pdf);
+                if (existingPdf) {
+                    await addCloudinaryDeletion(existingPdf, 'raw');
+                }
+                tasks.push(PdfFiles.findByIdAndDelete(existingProduct.pdf));
+            }
+
+            // Add new PDF
             const pdf = new PdfFiles({
-                file: pdfFile.path,
+                filename: pdfFile.originalname,
+                url: pdfFile.path,
+                short: productData.title
             });
-            tasks.push(pdf.save().then(saved => { pdfDoc = saved; }));
+            tasks.push(
+                pdf.save().then(saved => {
+                    newPdfId = saved._id;
+                })
+            );
+        } else if (productData.removePdf && existingProduct.pdf) {
+            const existingPdf = await PdfFiles.findById(existingProduct.pdf);
+            if (existingPdf) {
+                await addCloudinaryDeletion(existingPdf, 'raw');
+            }
+            tasks.push(PdfFiles.findByIdAndDelete(existingProduct.pdf));
+            newPdfId = null;
         }
 
-        await Promise.all(tasks);
+        if (videoFile) {
+            // Delete existing video from Cloudinary and DB if exists
+            if (existingProduct.video) {
+                const existingVideo = await VideoFiles.findById(existingProduct.video);
+                if (existingVideo) {
+                    await addCloudinaryDeletion(existingVideo, 'video');
+                }
+                tasks.push(VideoFiles.findByIdAndDelete(existingProduct.video));
+            }
 
-        if (imageDoc?._id) updatedFields.image = imageDoc._id;
-        if (pdfDoc?._id) updatedFields.pdf = pdfDoc._id;
+            // Add new video
+            const video = new VideoFiles({
+                filename: videoFile.originalname,
+                url: videoFile.path,
+            });
+            tasks.push(
+                video.save().then(saved => {
+                    newVideoId = saved._id;
+                })
+            );
+        } else if (productData.removeVideo && existingProduct.video) {
+            const existingVideo = await VideoFiles.findById(existingProduct.video);
+            if (existingVideo) {
+                await addCloudinaryDeletion(existingVideo, 'video');
+            }
+            tasks.push(VideoFiles.findByIdAndDelete(existingProduct.video));
+            newVideoId = null;
+        }
+
+        // Execute all database and Cloudinary operations
+        await Promise.all([...tasks, ...cloudinaryDeletions]);
 
         const updatedProduct = await Products.findByIdAndUpdate(
             productId,
-            { $set: updatedFields },
+            {
+                ...productData,
+                image: newImageIds,
+                pdf: newPdfId,
+                video: newVideoId,
+            },
             { new: true }
         );
 
         return updatedProduct;
     } catch (error) {
-        throw new Error(error);
+        console.error("Error in updateProduct:", error);
+        throw new Error(error.message || "Failed to update product");
     }
 };
 
-
 module.exports.findAll = async () => {
     try {
-        const allProducts = await Products.find().populate("category", "name").populate("subCategory").populate("image").populate("pdf").sort({ createdAt: -1 }).lean();
+        const allProducts = await Products.find().populate("category", "name").populate("subCategory").populate("image").populate("pdf").populate("video").sort({ createdAt: -1 }).lean();
         return allProducts;
     } catch (error) {
         throw new Error(error);
@@ -90,7 +248,7 @@ module.exports.findAll = async () => {
 
 module.exports.findOne = async (id) => {
     try {
-        const product = await Products.findById(id).populate("category", "name").populate("subCategory").populate("image").populate("pdf").sort({ createdAt: -1 }).lean();
+        const product = await Products.findById(id).populate("category", "name").populate("subCategory").populate("image").populate("pdf").populate("video").sort({ createdAt: -1 }).lean();
         return product;
     } catch (error) {
         throw new Error(error);
@@ -100,12 +258,14 @@ module.exports.findOne = async (id) => {
 module.exports.deleteOne = async (id) => {
     try {
         const product = await Products.findByIdAndDelete(id);
-        console.log(product);
         if (product.image) {
-            await ImageFiles.findByIdAndDelete(product.image);
+            await ImageFiles.deleteMany({ _id: { $in: product.image } });
         }
         if (product.pdf) {
             await PdfFiles.findByIdAndDelete(product.pdf);
+        }
+        if (product.video) {
+            await VideoFiles.findByIdAndDelete(product.video);
         }
         return product;
     } catch (error) {

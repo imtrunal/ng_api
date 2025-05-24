@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
             subcategories: subcategoryIds
         });
 
-        const populated = await Category.findById(newCategory._id).populate('subcategories', 'name');
+        const populated = await Category.findById(newCategory._id).populate('subcategories');
         res.status(201).json(populated);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -53,7 +53,7 @@ router.post('/', async (req, res) => {
 // Get all categories with subcategories
 router.get('/', async (req, res) => {
     try {
-        const categories = await Category.find().populate('subcategories', 'name');
+        const categories = await Category.find().populate('subcategories', 'name , icon');
         res.json(categories);
     } catch (err) {
         res.status(500).json({ error: err.message });

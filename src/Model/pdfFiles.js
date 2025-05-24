@@ -9,7 +9,6 @@ const pdfFiles = new mongoose.Schema({
     short: {
         type: String,
         required: true,
-        default: () => shortId.generate(),
     },
     createdAt: {
         type: Date,

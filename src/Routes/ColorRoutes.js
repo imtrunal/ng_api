@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Color = require('../model/color');
+const Color = require("../Model/color");
 
 // Create a new color
 router.post('/', async (req, res) => {

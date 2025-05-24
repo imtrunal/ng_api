@@ -1,4 +1,4 @@
-const TotalCounts = require('../model/Statistics');
+const TotalCounts = require("../Model/Statistics");
 
 async function incrementTotalCount(field, count) {
   try {

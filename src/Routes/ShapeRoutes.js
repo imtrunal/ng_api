@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Shape = require('../model/shape');
+const Shape = require("../Model/shape");
 
 // Create a new shape
 router.post('/', async (req, res) => {

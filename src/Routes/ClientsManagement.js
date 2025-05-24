@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Client = require('../model/clients');
+const Client = require("../Model/clients");
 const { upload } = require('../utils/upload');
 
 router.post('/', upload, async (req, res) => {

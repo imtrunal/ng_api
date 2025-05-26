@@ -9,10 +9,6 @@ const totalCountsSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    totalInquiries: {
-        type: Number,
-        default: 0
-    },
     totalEKLGUse: {
         type: Number,
         default: 0

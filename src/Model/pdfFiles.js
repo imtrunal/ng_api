@@ -6,6 +6,10 @@ const pdfFiles = new mongoose.Schema({
         type: String,
         required: true
     },
+    totalPages: {
+        type: Number,
+        default: 1,
+    },
     short: {
         type: String,
         required: true,

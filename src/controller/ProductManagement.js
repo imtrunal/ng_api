@@ -1,7 +1,7 @@
 const productService = require('../Service/productService');
 const status = require('http-status');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
-const { getCloudinaryPublicId, destroyImage } = require('../utils/upload');
+const { getCloudinaryPublicId, destroyImage, getPdfPages } = require('../utils/upload');
 const { incrementTotalCount, decrementTotalCount } = require('../utils/updateStatistics');
 
 const addProduct = async (req, res) => {
@@ -14,7 +14,7 @@ const addProduct = async (req, res) => {
     let imageIndex = 0;
     let pdfIndex = 0;
     let videoIndex = 0;
-    
+
     const productPromises = productsData.map(productData => {
       const productImages = [];
       // Assign images
@@ -23,15 +23,15 @@ const addProduct = async (req, res) => {
           productImages.push(allImages[imageIndex++]);
         }
       }
-      
+
       // Assign PDF if needed
-      const productPdf = productData.hasPdf && pdfIndex < allPdfs.length 
-        ? allPdfs[pdfIndex++] 
+      const productPdf = productData.hasPdf && pdfIndex < allPdfs.length
+        ? allPdfs[pdfIndex++]
         : null;
-      
+
       // Assign video if needed
-      const productVideo = productData.hasVideo && videoIndex < allVideos.length 
-        ? allVideos[videoIndex++] 
+      const productVideo = productData.hasVideo && videoIndex < allVideos.length
+        ? allVideos[videoIndex++]
         : null;
 
       return productService.createProduct({
@@ -89,41 +89,204 @@ const updateProduct = async (req, res) => {
   }
 };
 
+// const getAllProduct = async (req, res) => {
+//   try {
+//     const products = await productService.findAll();
+
+//     // First add totalPdfPages to each product
+//     const productsWithPdfCount = await Promise.all(
+//       products.map(async (product) => {
+//         const productObj = product.toObject ? product.toObject() : product;
+//         let totalPdfPages = 0;
+
+//         if (product.pdf?.url) {
+//           try {
+//             const publicId = getCloudinaryPublicId(product.pdf.url);
+//             if (publicId) {
+//               totalPdfPages = await getPdfPages(publicId) || 0;
+//             }
+//           } catch (err) {
+//             console.error(`Error getting PDF pages for ${product._id}:`, err);
+//           }
+//         }
+
+//         return { 
+//           ...productObj,
+//           totalPdfPages 
+//         };
+//       })
+//     );
+
+//     // Keep your original catalog structure
+//     const catalogData = {};
+//     productsWithPdfCount.forEach(product => {
+//       const categoryId = product.category?._id?.toString() || "unknownCategoryId";
+//       const subCategoryId = product.subCategory?._id?.toString() || "unknownSubCategoryId";
+
+//       if (!catalogData[categoryId]) {
+//         catalogData[categoryId] = {};
+//       }
+
+//       if (!catalogData[categoryId][subCategoryId]) {
+//         catalogData[categoryId][subCategoryId] = [];
+//       }
+
+//       catalogData[categoryId][subCategoryId].push({
+//         id: product._id,
+//         ...product // This now includes totalPdfPages
+//       });
+//     });
+
+//     return successResponse(
+//       req,
+//       res,
+//       status.OK,
+//       "Product catalog fetched successfully", 
+//       { catalogData }
+//     );
+//   } catch (error) {
+//     console.error(error);
+//     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
+//   }
+// };
+
+// const getAllProduct = async (req, res) => {
+//   try {
+//     const products = await productService.findAll();
+//     console.log("Fetched products:", products);
+
+//     const productsWithPdfData = await Promise.all(
+//       products.map(async (product) => {
+//         const productData = product.toObject ? product.toObject() : product;
+//         let totalPages = 0; // Default to 0 pages
+
+//         if (product.pdf?.url) {
+//           try {
+//             const publicId = getCloudinaryPublicId(product.pdf.url);
+//             if (publicId) {
+//               totalPages = await getPdfPages(publicId) || 0;
+//             }
+//           } catch (err) {
+//             console.error(`Error processing PDF for ${product._id}:`, err);
+//           }
+//         }
+
+//         // Add totalPages field instead of pdfPages array
+//         return { 
+//           ...productData,
+//           pdfPages: totalPages 
+//         };
+//       })
+//     );
+
+//     const catalogData = {};
+//     productsWithPdfData.forEach(product => {
+//       const categoryId = product.category?._id?.toString() || "unknownCategoryId";
+//       const subCategoryId = product.subCategory?._id?.toString() || "unknownSubCategoryId";
+
+//       if (!catalogData[categoryId]) {
+//         catalogData[categoryId] = {};
+//       }
+
+//       if (!catalogData[categoryId][subCategoryId]) {
+//         catalogData[categoryId][subCategoryId] = [];
+//       }
+
+//       catalogData[categoryId][subCategoryId].push({
+//         id: product._id,
+//         ...product // Now includes pdfPages as a number
+//       });
+//     });
+
+//     return successResponse(
+//       req,
+//       res,
+//       status.OK,
+//       "Product catalog fetched successfully",
+//       { catalogData }
+//     );
+//   } catch (error) {
+//     console.error(error);
+//     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
+//   }
+// };
+
+
+// product.controller.js
 const getAllProduct = async (req, res) => {
   try {
-    const products = await productService.findAll();
+    const {
+      category,
+      subCategory,
+      material,
+      shape,
+      color,
+      moq,
+      format,
+      minPrice,
+      maxPrice,
+      sort,
+      search
+    } = req.query;
 
-    const catalogData = {};
-    products.forEach(product => {
-      const categoryId = product.category?._id.toString() || "unknownCategoryId";
-      const subCategoryId = product.subCategory?._id.toString() || "unknownSubCategoryId";
-
-      if (!catalogData[categoryId]) {
-        catalogData[categoryId] = {};
-      }
-
-      if (!catalogData[categoryId][subCategoryId]) {
-        catalogData[categoryId][subCategoryId] = [];
-      }
-
-      catalogData[categoryId][subCategoryId].push({
-        id: product._id,
-        ...product
-      });
+    const products = await productService.findAll({
+      category,
+      subCategory,
+      material: material !== 'all' ? material : undefined,
+      shape: shape !== 'all' ? shape : undefined,
+      color: color !== 'all' ? color : undefined,
+      moq: moq !== 'all' ? moq : undefined,
+      format: format !== 'all' ? format : undefined,
+      minPrice,
+      maxPrice,
+      sort,
+      search
     });
+
+    // Convert Mongoose documents to plain objects if needed
+    const productsData = products.map(product =>
+      product.toObject ? product.toObject() : product
+    );
+
+    // Organize by category/subcategory if no specific category requested
+    let responseData;
+    if (!category) {
+      const catalogData = {};
+      productsData.forEach(product => {
+        const categoryId = product.category?._id?.toString() || "unknownCategoryId";
+        const subCategoryId = product.subCategory?._id?.toString() || "unknownSubCategoryId";
+
+        if (!catalogData[categoryId]) {
+          catalogData[categoryId] = {};
+        }
+
+        if (!catalogData[categoryId][subCategoryId]) {
+          catalogData[categoryId][subCategoryId] = [];
+        }
+
+        catalogData[categoryId][subCategoryId].push({
+          id: product._id,
+          ...product
+        });
+      });
+      responseData = { catalogData };
+    } else {
+      responseData = { products: productsData };
+    }
 
     return successResponse(
       req,
       res,
       status.OK,
-      "Product catalog fetched successfully",
-      { catalogData }
+      "Products fetched successfully",
+      responseData
     );
   } catch (error) {
     console.error(error);
     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
   }
 };
+
 
 const getProductById = async (req, res) => {
   try {

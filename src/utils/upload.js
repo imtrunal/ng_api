@@ -11,7 +11,7 @@ const folderConfigs = {
     },
     'productPdf': {
         folder: 'products/pdfs',
-        resource_type: 'raw',
+        resource_type: 'auto',
         allowed_formats: ['pdf'],
         format: 'pdf'
     },
@@ -56,6 +56,19 @@ const getCloudinaryPublicId = (imageUrl) => {
     return decodeURIComponent(encodedId);
 };
 
+const getPdfPages = async (publicId) => {
+    try {
+        const result = await cloudinary.api.resource(publicId, {
+            resource_type: 'image',
+        });
+        console.log(`PDF resource fetched: ${publicId}`, result);
+        
+        return result.pages;
+    } catch (error) {        
+        return 1;
+    }
+}
+
 
 const destroyImage = async (publicId, resource_type = 'image') => {
     console.log(resource_type);
@@ -86,4 +99,4 @@ const upload = multer({ storage }).fields([
     { name: 'attachedFiles', maxCount: 1 },
 ]);
 
-module.exports = { upload, getCloudinaryPublicId, destroyImage };
+module.exports = { upload, getCloudinaryPublicId, destroyImage, getPdfPages };

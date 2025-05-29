@@ -2,7 +2,7 @@ const ImageFiles = require("../Model/imageFiles");
 const PdfFiles = require("../Model/pdfFiles");
 const Products = require("../Model/product");
 const VideoFiles = require("../Model/videoFiles");
-const { getCloudinaryPublicId, destroyImage } = require("../utils/upload");
+const { getCloudinaryPublicId, destroyImage, getPdfPages } = require("../utils/upload");
 
 module.exports.createProduct = async ({ productData, imageFiles, pdfFile, videoFile }) => {
     try {
@@ -29,10 +29,16 @@ module.exports.createProduct = async ({ productData, imageFiles, pdfFile, videoF
         }
 
         if (pdfFile) {
+            const publicId = getCloudinaryPublicId(product.pdf.url);
+            let totalPages = 1;
+            if (publicId) {
+                totalPages = await getPdfPages(publicId);
+            }
             const pdf = new PdfFiles({
                 filename: pdfFile.originalname,
                 url: pdfFile.path,
-                short: productData.title
+                short: productData.title,
+                totalPages: totalPages,
             });
             tasks.push(
                 pdf.save().then(saved => {
@@ -237,14 +243,120 @@ module.exports.updateProduct = async ({
     }
 };
 
-module.exports.findAll = async () => {
+// module.exports.findAll = async () => {
+//     try {
+//         const allProducts = await Products.find().populate("category", "name").populate("subCategory").populate("image").populate("pdf").populate("video").sort({ createdAt: -1 }).lean();
+//         return allProducts;
+//     } catch (error) {
+//         throw new Error(error);
+//     }
+// }
+
+
+// product.service.js
+
+module.exports.findAll = async (filters = {}) => {
     try {
-        const allProducts = await Products.find().populate("category", "name").populate("subCategory").populate("image").populate("pdf").populate("video").sort({ createdAt: -1 }).lean();
-        return allProducts;
+        const {
+            category,
+            subCategory,
+            material,
+            shape,
+            color,
+            moq,
+            format,
+            minPrice,
+            maxPrice,
+            sort,
+            search
+        } = filters;
+
+        // Base query
+        let query = Products.find();
+
+        // Category filter
+        if (category) {
+            query = query.where('category').equals(category);
+        }
+
+        // Subcategory filter
+        if (subCategory) {
+            query = query.where('subCategory').equals(subCategory);
+        }
+
+        // Material filter
+        if (material && material !== 'all') {
+            query = query.where('material').regex(new RegExp(material, 'i'));
+        }
+
+        // Shape filter
+        if (shape && shape !== 'all') {
+            query = query.where('shape').equals(shape);
+        }
+
+        // Color filter
+        if (color && color !== 'all') {
+            query = query.where('color').equals(color);
+        }
+
+        // MOQ filter
+        if (moq && moq !== 'all') {
+            if (moq.includes('+')) {
+                const minMoq = parseInt(moq);
+                query = query.where('moq').gte(minMoq);
+            } else {
+                const [min, max] = moq.split('-').map(Number);
+                query = query.where('moq').gte(min).lte(max);
+            }
+        }
+
+        // Format filter (PDF/Video)
+        if (format && format !== 'all') {
+            if (format === 'pdf') {
+                query = query.where('pdf').exists(true);
+            } else if (format === 'video') {
+                query = query.where('video').exists(true);
+            }
+        }
+
+        // Price range filter
+        if (minPrice !== undefined || maxPrice !== undefined) {
+            const priceFilter = {};
+            if (minPrice !== undefined) priceFilter.$gte = Number(minPrice);
+            if (maxPrice !== undefined) priceFilter.$lte = Number(maxPrice);
+            query = query.where('price', priceFilter);
+        }
+
+        // Search filter
+        if (search) {
+            query = query.where('title').regex(new RegExp(search, 'i'));
+        }
+
+        // Sorting
+        let sortOption = { createdAt: -1 }; // Default sort
+        if (sort) {
+            if (sort === 'price-low') {
+                sortOption = { price: 1 };
+            } else if (sort === 'price-high') {
+                sortOption = { price: -1 };
+            }
+        }
+
+        // Execute query with population
+        const products = await query
+            .populate("category", "name")
+            .populate("subCategory")
+            .populate("image")
+            .populate("pdf")
+            .populate("video")
+            .sort(sortOption)
+            .lean();
+
+        return products;
     } catch (error) {
         throw new Error(error);
     }
-}
+};
 
 module.exports.findOne = async (id) => {
     try {

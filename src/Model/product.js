@@ -35,6 +35,9 @@ const productSchema = new mongoose.Schema({
     material: {
         type: String
     },
+    description: {
+        type: String
+    },
     moq: {
         type: Number,
         default: 1

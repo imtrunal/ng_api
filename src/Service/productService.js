@@ -313,11 +313,12 @@ module.exports.findAll = async (filters = {}) => {
         // Format filter (PDF/Video)
         if (format && format !== 'all') {
             if (format === 'pdf') {
-                query = query.where('pdf').exists(true);
+                query = query.where('pdf').ne(null);
             } else if (format === 'video') {
-                query = query.where('video').exists(true);
+                query = query.where('video').ne(null);
             }
         }
+
 
         // Price range filter
         if (minPrice !== undefined || maxPrice !== undefined) {

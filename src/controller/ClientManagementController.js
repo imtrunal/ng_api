@@ -1,42 +1,49 @@
-const Client = require("../Model/clients");
+const clientService = require("../Service/ClientService");
 
 const addNewClient = async (req, res) => {
     try {
         const logos = req.files?.clientLogo;
-
-        if (!logos || logos.length === 0) {
-            return res.status(400).json({ error: "At least one client logo is required" });
-        }
-
-        const createdClients = await Promise.all(
-            logos.map(file => {
-                const client = new Client({ link: file.path });
-                return client.save();
-            })
-        );
+        const createdClients = await clientService.addClients(logos);
 
         return res.status(201).json(createdClients);
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
     }
 };
 
 const getAllClients = async (req, res) => {
     try {
-        const clients = await Client.find();
-        return res.json(clients);
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
+        const clients = await clientService.findAllClients();
+        return res.status(200).json(clients);
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 };
 
 const deleteClient = async (req, res) => {
     try {
-        const client = await Client.findByIdAndDelete(req.params.id);
-        if (!client) return res.status(404).json({ message: 'Client not found' });
-        return res.json({ message: 'Client deleted successfully' });
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
+        const deleted = await clientService.deleteClientById(req.params.id);
+        if (!deleted) {
+            return res.status(404).json({
+                success: false,
+                message: "Client not found"
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Client deleted successfully"
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 };
 

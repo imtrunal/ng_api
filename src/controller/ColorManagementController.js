@@ -1,57 +1,48 @@
-const Color = require("../Model/color");
+const colorService = require("../Service/ColorService");
 
-// Create a new color
 const addNewColor = async (req, res) => {
     try {
-        const color = new Color(req.body);
-        await color.save();
+        const color = await colorService.addNewColor(req.body);
         return res.status(201).json(color);
     } catch (error) {
         return res.status(400).json({ message: error.message });
     }
 };
 
-// Get all colors
-const getAllColors = async (req, res) => {    
+const getAllColors = async (req, res) => {
     try {
-        const colors = await Color.find();
-        return res.json(colors);
+        const colors = await colorService.getAllColors();
+        return res.status(200).json(colors);
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
 };
 
-// Get a single color by ID
 const getColorById = async (req, res) => {
     try {
-        const color = await Color.findById(req.params.id);
-        if (!color) return res.status(404).json({ message: 'Color not found' });
-        return res.json(color);
+        const color = await colorService.getColorById(req.params.id);
+        if (!color) return res.status(404).json({ message: "Color not found" });
+        return res.status(200).json(color);
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
 };
 
-// Update a color
 const updateColor = async (req, res) => {
     try {
-        const color = await Color.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true
-        });
-        if (!color) return res.status(404).json({ message: 'Color not found' });
-        return res.json(color);
+        const color = await colorService.updateColor(req.params.id, req.body);
+        if (!color) return res.status(404).json({ message: "Color not found" });
+        return res.status(200).json(color);
     } catch (error) {
         return res.status(400).json({ message: error.message });
     }
 };
 
-// Delete a color
 const deleteColor = async (req, res) => {
     try {
-        const color = await Color.findByIdAndDelete(req.params.id);
-        if (!color) return res.status(404).json({ message: 'Color not found' });
-        return res.json({ message: 'Color deleted successfully' });
+        const color = await colorService.deleteColor(req.params.id);
+        if (!color) return res.status(404).json({ message: "Color not found" });
+        return res.status(200).json({ message: "Color deleted successfully" });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -62,5 +53,5 @@ module.exports = {
     getAllColors,
     getColorById,
     updateColor,
-    deleteColor
+    deleteColor,
 };

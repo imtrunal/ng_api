@@ -1,62 +1,49 @@
-const Banner = require("../Model/banner");
 const { status } = require("http-status");
 const { errorResponse, successResponse } = require("../utils/apiResponse");
+const bannerService = require("../Service/BannerService");
 
 const addBanner = async (req, res) => {
     try {
         const bannerFile = req.files?.banner?.[0];
 
-        console.log(bannerFile);
+        if (!bannerFile) {
+            return errorResponse(req, res, status.BAD_REQUEST, "Banner file is required");
+        }
 
-        const banner = await Banner.create({
-            banner: bannerFile.path,
-            bannerName: bannerFile.originalname,
-            startDate: req.body.startDate,
-            endDate: req.body.endDate,
-        });
-        return res.status(200).send({
-            success: true,
-            message: "Banner added successfully",
-            data: banner
-        })
+        const banner = await bannerService.add(bannerFile, req.body);
+
+        return successResponse(req, res, status.CREATED, "Banner added successfully", {banner});
     } catch (error) {
-        console.log(error);
-        return res.status(500).send({
-            success: false,
-            message: error.message,
-        })
+        console.error(error);
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
     }
-}
+};
 
 const getAllBanners = async (req, res) => {
     try {
-        const banners = await Banner.find().sort({ startDate: 1 });
-        return res.status(200).send({
-            success: true,
-            message: "Banners fetched successfully",
-            data: banners
-        });
+        const banners = await bannerService.findAll();
+        return successResponse(req, res, status.OK, "Banners fetched successfully", { data: banners });
     } catch (error) {
-        console.log(error);
-        return res.status(500).send({
-            success: false,
-            message: error.message,
-        });
+        console.error(error);
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
     }
-}
+};
 
 const deleteBanner = async (req, res) => {
     try {
-        await Banner.findByIdAndDelete(req.params.id);
+        const deleted = await bannerService.deleteBanner(req.params.id);
+        if (!deleted) {
+            return errorResponse(req, res, status.NOT_FOUND, "Banner not found");
+        }
         return successResponse(req, res, status.OK, "Banner deleted successfully");
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
     }
-}
+};
 
 module.exports = {
     addBanner,
     getAllBanners,
     deleteBanner
-}
+};

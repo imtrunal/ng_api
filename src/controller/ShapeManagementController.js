@@ -1,57 +1,48 @@
-const Shape = require("../Model/shape");
+const shapeService = require("../Service/ShapeService");
 
-// Create a new shape
 const addNewShape = async (req, res) => {
     try {
-        const shape = new Shape(req.body);
-        await shape.save();
+        const shape = await shapeService.addNewShape(req.body);
         return res.status(201).json(shape);
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
 };
 
-// Get all shapes
-const getAllShapes = async (req, res) => {    
+const getAllShapes = async (req, res) => {
     try {
-        const shapes = await Shape.find();
-        return res.json(shapes);
+        const shapes = await shapeService.getAllShapes();
+        return res.status(200).json(shapes);
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
 };
 
-// Get a shape by ID
 const getShapeById = async (req, res) => {
     try {
-        const shape = await Shape.findById(req.params.id);
-        if (!shape) return res.status(404).json({ message: 'Shape not found' });
-        return res.json(shape);
+        const shape = await shapeService.getShapeById(req.params.id);
+        if (!shape) return res.status(404).json({ message: "Shape not found" });
+        return res.status(200).json(shape);
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
 };
 
-// Update a shape
 const updateShape = async (req, res) => {
     try {
-        const shape = await Shape.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true
-        });
-        if (!shape) return res.status(404).json({ message: 'Shape not found' });
-        return res.json(shape);
+        const shape = await shapeService.updateShape(req.params.id, req.body);
+        if (!shape) return res.status(404).json({ message: "Shape not found" });
+        return res.status(200).json(shape);
     } catch (error) {
         return res.status(400).json({ message: error.message });
     }
 };
 
-// Delete a shape
 const deleteShape = async (req, res) => {
     try {
-        const shape = await Shape.findByIdAndDelete(req.params.id);
-        if (!shape) return res.status(404).json({ message: 'Shape not found' });
-        return res.json({ message: 'Shape deleted successfully' });
+        const shape = await shapeService.deleteShape(req.params.id);
+        if (!shape) return res.status(404).json({ message: "Shape not found" });
+        return res.status(200).json({ message: "Shape deleted successfully" });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -62,5 +53,5 @@ module.exports = {
     getAllShapes,
     getShapeById,
     updateShape,
-    deleteShape
+    deleteShape,
 };

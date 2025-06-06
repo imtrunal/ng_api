@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { upload } = require('../utils/upload');
-const { addBanner, getAllBanners, deleteBanner } = require('../controller/BannerManagement');
+const { addBanner, getAllBanners, deleteBanner } = require('../controller/BannerManagementController');
 
 //Add PDF
 router.post('/add', upload, addBanner);

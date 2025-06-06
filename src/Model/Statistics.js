@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const totalCountsSchema = new mongoose.Schema({
+const statisticsSchema = new mongoose.Schema({
     totalVisiters: {
         type: Number,
         default: 0
@@ -15,5 +15,6 @@ const totalCountsSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-const TotalCounts = mongoose.model('Statistics', totalCountsSchema);
-module.exports = TotalCounts;
+const Statistics = mongoose.model('Statistics', statisticsSchema);
+
+module.exports = Statistics;

@@ -213,6 +213,7 @@ const updateProduct = async (req, res) => {
 
 
 // product.controller.js
+
 const getAllProduct = async (req, res) => {
   try {
     const {
@@ -286,7 +287,6 @@ const getAllProduct = async (req, res) => {
     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
   }
 };
-
 
 const getProductById = async (req, res) => {
   try {

@@ -1,62 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const Shape = require("../Model/shape");
+const {
+    addNewShape,
+    getAllShapes,
+    getShapeById,
+    updateShape,
+    deleteShape
+} = require("../controller/ShapeManagementController");
 
 // Create a new shape
-router.post('/', async (req, res) => {
-    try {
-        const shape = new Shape(req.body);
-        await shape.save();
-        res.status(201).json(shape);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-});
+router.post('/', addNewShape);
 
 // Get all shapes
-router.get('/', async (req, res) => {
-    try {
-        const shapes = await Shape.find();
-        res.json(shapes);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+router.get('/', getAllShapes);
 
 // Get a shape by ID
-router.get('/:id', async (req, res) => {
-    try {
-        const shape = await Shape.findById(req.params.id);
-        if (!shape) return res.status(404).json({ message: 'Shape not found' });
-        res.json(shape);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+router.get('/:id', getShapeById);
 
 // Update a shape
-router.put('/:id', async (req, res) => {
-    try {
-        const shape = await Shape.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true
-        });
-        if (!shape) return res.status(404).json({ message: 'Shape not found' });
-        res.json(shape);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-});
+router.put('/:id', updateShape);
 
 // Delete a shape
-router.delete('/:id', async (req, res) => {
-    try {
-        const shape = await Shape.findByIdAndDelete(req.params.id);
-        if (!shape) return res.status(404).json({ message: 'Shape not found' });
-        res.json({ message: 'Shape deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+router.delete('/:id', deleteShape);
 
 module.exports = router;

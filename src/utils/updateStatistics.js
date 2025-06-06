@@ -1,8 +1,8 @@
-const TotalCounts = require("../Model/Statistics");
+const Statistics = require("../Model/statistics");
 
 async function incrementTotalCount(field, count) {
   try {
-    await TotalCounts.findOneAndUpdate(
+    await Statistics.findOneAndUpdate(
       {},
       { $inc: { [field]: count } },
       { new: true, upsert: true }
@@ -14,7 +14,7 @@ async function incrementTotalCount(field, count) {
 
 async function decrementTotalCount(field, count) {
   try {
-    await TotalCounts.findOneAndUpdate(
+    await Statistics.findOneAndUpdate(
       {},
       { $inc: { [field]: count } },
       { new: true, upsert: true }

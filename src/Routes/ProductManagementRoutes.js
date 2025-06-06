@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { upload } = require('../utils/upload');
-const { addProduct, getAllProduct, deleteProduct, getProductById, updateProduct } = require('../controller/ProductManagement');
+const { addProduct, getAllProduct, deleteProduct, getProductById, updateProduct } = require('../controller/ProductManagementController');
 
 
 router.post('/add', upload, addProduct);

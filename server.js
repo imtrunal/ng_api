@@ -257,7 +257,7 @@ app.use("/pdfs", require("./src/Routes/PdfManagementRoutes"));
 app.use("/banners", require("./src/Routes/BannerManagementRoutes"));
 app.use("/products", require("./src/Routes/ProductManagementRoutes"));
 app.use("/category", require("./src/Routes/CategoryListRoutes"));
-app.use("/clients", require("./src/Routes/ClientsManagement"));
+app.use("/clients", require("./src/Routes/ClientsManagementRoutes"));
 app.use("/colors", require("./src/Routes/ColorRoutes"));
 app.use("/shapes", require("./src/Routes/ShapeRoutes"));
 

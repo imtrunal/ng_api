@@ -260,7 +260,7 @@ app.use("/category", require("./src/Routes/CategoryListRoutes"));
 app.use("/clients", require("./src/Routes/ClientsManagementRoutes"));
 app.use("/colors", require("./src/Routes/ColorRoutes"));
 app.use("/shapes", require("./src/Routes/ShapeRoutes"));
-
+app.use("/statistics", require("./src/Routes/StatisticsRoutes"));
 
 
 app.listen(PORT, () => console.log(`Server is running on ${PORT}`));

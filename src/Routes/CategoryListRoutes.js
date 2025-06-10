@@ -10,12 +10,13 @@ const {
     deleteCategory,
     addNewSubCategory,
     removeSubCategory } = require('../controller/CategoryController');
+const { authorization } = require('../middleware/auth.middleware');
 
-router.post('/bulk', addBulkCategory);
+router.post('/bulk', authorization, addBulkCategory);
 
 
 // Create a new category with subcategories
-router.post('/', addCategory);
+router.post('/', authorization, addCategory);
 
 // Get all categories with subcategories
 router.get('/', getAllCategory);
@@ -24,15 +25,15 @@ router.get('/', getAllCategory);
 router.get('/:id', getCategoryById);
 
 // Update a category name
-router.put('/:id', updateCategoryName);
+router.put('/:id', authorization, updateCategoryName);
 
 // Delete a category and its subcategories
-router.delete('/:id', deleteCategory);
+router.delete('/:id', authorization, deleteCategory);
 
 // Add new subcategories to existing category
-router.post('/:id/subcategories', addNewSubCategory);
+router.post('/:id/subcategories', authorization, addNewSubCategory);
 
 // Remove a subcategory from a category (optional: delete subcategory)
-router.delete('/:id/subcategories/:subId', removeSubCategory);
+router.delete('/:id/subcategories/:subId', authorization, removeSubCategory);
 
 module.exports = router;

@@ -7,9 +7,10 @@ const {
     updateShape,
     deleteShape
 } = require("../controller/ShapeManagementController");
+const { authorization } = require("../middleware/auth.middleware");
 
 // Create a new shape
-router.post('/', addNewShape);
+router.post('/', authorization, addNewShape);
 
 // Get all shapes
 router.get('/', getAllShapes);
@@ -18,9 +19,9 @@ router.get('/', getAllShapes);
 router.get('/:id', getShapeById);
 
 // Update a shape
-router.put('/:id', updateShape);
+router.put('/:id', authorization, updateShape);
 
 // Delete a shape
-router.delete('/:id', deleteShape);
+router.delete('/:id', authorization, deleteShape);
 
 module.exports = router;

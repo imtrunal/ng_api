@@ -7,9 +7,10 @@ const {
     updateColor,
     deleteColor
 } = require("../controller/ColorManagementController")
+const { authorization } = require("../middleware/auth.middleware");
 
 // Create a new color
-router.post('/', addNewColor);
+router.post('/', authorization, addNewColor);
 
 // Get all colors
 router.get('/', getAllColors);
@@ -18,9 +19,9 @@ router.get('/', getAllColors);
 router.get('/:id', getColorById);
 
 // Update a color
-router.put('/:id', updateColor);
+router.put('/:id', authorization, updateColor);
 
 // Delete a color
-router.delete('/:id', deleteColor);
+router.delete('/:id', authorization, deleteColor);
 
 module.exports = router;

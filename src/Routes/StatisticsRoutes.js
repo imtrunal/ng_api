@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const Statistics = require("../Model/statistics");
 const { default: status } = require("http-status");
+const { authorization } = require("../middleware/auth.middleware");
 
-router.get('/', async (req, res) => {
+router.get('/', authorization,async (req, res) => {
     try {
         const statistics = await Statistics.find();
         return res.status(status.OK).send({

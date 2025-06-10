@@ -6,9 +6,10 @@ const {
     getAllClients,
     deleteClient
 } = require("../controller/ClientManagementController")
+const { authorization } = require("../middleware/auth.middleware");
 
-router.post('/', upload, addNewClient);
+router.post('/', authorization, upload, addNewClient);
 router.get('/', getAllClients);
-router.delete('/:id', deleteClient);
+router.delete('/:id', authorization, deleteClient);
 
 module.exports = router;

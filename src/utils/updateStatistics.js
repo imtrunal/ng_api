@@ -24,6 +24,7 @@ async function decrementTotalCount(field, count) {
   }
 }
 
+
 module.exports = {
   incrementTotalCount,
   decrementTotalCount,

@@ -12,6 +12,7 @@ const axios = require("axios");
 const { upload } = require('./src/utils/upload');
 const { successResponse, errorResponse } = require('./src/utils/apiResponse');
 const { default: status } = require('http-status');
+const { incrementTotalCount } = require('./src/utils/updateStatistics');
 
 connectDb();
 app.use(cors({
@@ -25,36 +26,6 @@ app.get('/', (req, res) => {
     res.send('Admin Panel Backend');
 });
 
-
-
-app.get("/transliterate", async (req, res) => {
-    const englishText = req.query.text;
-
-    try {
-        const response = await axios.get("https://inputtools.google.com/request", {
-            params: {
-                text: englishText,
-                itc: "gu-t-i0-und",
-                num: 1,
-                cp: 0,
-                cs: 1,
-                ie: "utf-8",
-                oe: "utf-8",
-                app: "demopage"
-            }
-        });
-
-        let translatedText = englishText;
-        if (response.data[0] === "SUCCESS" && response.data[1]?.length > 0) {
-            translatedText = response.data[1][0][1][0]; // First suggestion
-        }
-
-        res.json({ translated: translatedText });
-    } catch (error) {
-        console.error("Error:", error);
-        res.json({ translated: englishText });
-    }
-});
 
 // const mappingFile = path.join(__dirname, "eklg17-mapping.json");
 // const eklg17Mapping = JSON.parse(fs.readFileSync(mappingFile, "utf8"));
@@ -223,21 +194,59 @@ const convertToUnicode = (eklg17Text) => {
     return convertedText;
 };
 
-// API endpoint
-app.post("/eklg17-convert", (req, res) => {
-    const { text } = req.body;
-    if (!text) return res.status(400).json({ error: "No text provided!" });
 
-    const convertedText = convertToEKLG17(text);
-    res.json({ convertedText });
+app.get("/transliterate", async (req, res) => {
+    try {
+        const englishText = req.query.text;
+        const response = await axios.get("https://inputtools.google.com/request", {
+            params: {
+                text: englishText,
+                itc: "gu-t-i0-und",
+                num: 1,
+                cp: 0,
+                cs: 1,
+                ie: "utf-8",
+                oe: "utf-8",
+                app: "demopage"
+            }
+        });
+
+        let translatedText = englishText;
+        if (response.data[0] === "SUCCESS" && response.data[1]?.length > 0) {
+            translatedText = response.data[1][0][1][0]; // First suggestion
+        }
+        return successResponse(req, res, status.OK, "Transalted text", translatedText);
+    } catch (error) {
+        console.error("Error:", error);
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message)
+    }
+});
+
+// API endpoint
+app.post("/eklg17-convert", async (req, res) => {
+    try {
+        const { text } = req.body;
+        if (!text) return res.status(400).json({ error: "No text provided!" });
+
+        const convertedText = convertToEKLG17(text);
+        await incrementTotalCount('totalEKLGUse', 1);
+        return successResponse(req, res, status.OK, "EKLG 17 converted text", convertedText);
+
+    } catch (error) {
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
+    }
 });
 
 app.post("/unique-convert", (req, res) => {
-    const { text } = req.body;
-    if (!text) return res.status(400).json({ error: "No text provided!" });
+    try {
+        const { text } = req.body;
+        if (!text) return res.status(400).json({ error: "No text provided!" });
 
-    const convertedText = convertToUnicode(text);
-    res.json({ convertedText });
+        const convertedText = convertToUnicode(text);
+        return successResponse(req, res, status.OK, "Unique converted text", convertedText);
+    } catch (error) {
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);s
+    }
 });
 
 app.post("/upload", upload, (req, res) => {

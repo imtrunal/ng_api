@@ -3,17 +3,15 @@ const router = express.Router();
 const Statistics = require("../Model/statistics");
 const { default: status } = require("http-status");
 const { authorization } = require("../middleware/auth.middleware");
+const { successResponse, errorResponse } = require("../utils/apiResponse");
 
-router.get('/', authorization,async (req, res) => {
+router.get('/', authorization, async (req, res) => {
     try {
-        const statistics = await Statistics.find();
-        return res.status(status.OK).send({
-            message: "Statistics retrieved successfully",
-            data: statistics
-        })
+        const statistics = await Statistics.findOne();
+        return successResponse(req, res, status.OK, "Statistics fetched successfully", statistics);
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: error.message });
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
     }
 });
 

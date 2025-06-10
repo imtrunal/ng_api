@@ -1,79 +1,81 @@
+const { default: status } = require('http-status');
 const categoryService = require('../Service/CategoryService');
+const { errorResponse, successResponse } = require("../utils/apiResponse");
 
 const addBulkCategory = async (req, res) => {
     try {
-        const createdCategories = await categoryService.addBulk(req.body);
-        return res.status(201).json(createdCategories);
-    } catch (err) {
-        return res.status(400).json({ error: err.message });
+        const category = await categoryService.addBulk(req.body);
+        return successResponse(req, res, status.OK, "Bulk Category Added Successfully", category);
+    } catch (error) {
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message)
     }
 };
 
 const addCategory = async (req, res) => {
     try {
         const { name, subcategories } = req.body;
-        const createdCategory = await categoryService.add(name, subcategories);
-        return res.status(201).json(createdCategory);
-    } catch (err) {
-        return res.status(400).json({ error: err.message });
+        const category = await categoryService.add(name, subcategories);
+        return successResponse(req, res, status.CREATED, "Category Added Successfully", category);
+    } catch (error) {
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message)
     }
 };
 
 const getAllCategory = async (req, res) => {
     try {
         const categories = await categoryService.findAllCategory();
-        return res.json(categories);
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
+        return successResponse(req, res, status.OK, "Categories Retrieved Successfully",  categories );
+    } catch (error) {
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message)
     }
 };
 
 const getCategoryById = async (req, res) => {
     try {
         const category = await categoryService.findById(req.params.id);
-        if (!category) return res.status(404).json({ message: 'Category not found' });
-        return res.json(category);
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
+        if (!category) return errorResponse(req, res, status.NOT_FOUND, "Category Not Found");
+        return successResponse(req, res, status.OK, "Category Retrieved Successfully", category);
+    } catch (error) {
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message)
     }
 };
 
 const updateCategoryName = async (req, res) => {
     try {
-        const updated = await categoryService.updateName(req.params.id, req.body.name);
-        if (!updated) return res.status(404).json({ message: 'Category not found' });
-        return res.json(updated);
-    } catch (err) {
-        return res.status(400).json({ error: err.message });
+        const category = await categoryService.updateName(req.params.id, req.body.name);
+        if (!category) return errorResponse(req, res, status.NOT_FOUND, "Category Not Found");
+        return successResponse(req, res, status.OK, "Category Updated Successfully", category);
+    } catch (error) {
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message)
     }
 };
 
 const deleteCategory = async (req, res) => {
     try {
-        const deleted = await categoryService.deleteCategory(req.params.id);
-        if (!deleted) return res.status(404).json({ message: 'Category not found' });
-        return res.json({ message: 'Category and subcategories deleted' });
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
+        const category = await categoryService.deleteCategory(req.params.id);
+        if (!category) return errorResponse(req, res, status.NOT_FOUND, "Category Not Found");
+        return successResponse(req, res, status.OK, "Category Deleted Successfully");
+    } catch (error) {
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message)
     }
 };
 
 const addNewSubCategory = async (req, res) => {
     try {
-        const updated = await categoryService.addNewSubCategory(req.params.id, req.body.subcategories);
-        return res.status(201).json(updated);
-    } catch (err) {
-        return res.status(400).json({ error: err.message });
+        const category = await categoryService.addNewSubCategory(req.params.id, req.body.subcategories);
+        return successResponse(req, res, status.OK, "New Subcategory Added Successfully", category);
+    } catch (error) {
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message)
     }
 };
 
 const removeSubCategory = async (req, res) => {
     try {
-        const updated = await categoryService.removeSubCategory(req.params.id, req.params.subId);
-        if (!updated) return res.status(404).json({ message: 'Category not found' });
-        return res.json(updated);
-    } catch (err) {
-        return res.status(400).json({ error: err.message });
+        const category = await categoryService.removeSubCategory(req.params.id, req.params.subId);
+        if (!category) return errorResponse(req, res, status.NOT_FOUND, "Category Not Found");
+        return successResponse(req, res, status.OK, "Subcategory Removed Successfully", category);
+    } catch (error) {
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message)
     }
 };
 

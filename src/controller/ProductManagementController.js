@@ -50,7 +50,7 @@ const addProduct = async (req, res) => {
       res,
       status.OK,
       "Products added successfully",
-      { products: createdProducts }
+      createdProducts 
     );
 
   } catch (error) {
@@ -80,7 +80,7 @@ const updateProduct = async (req, res) => {
       res,
       status.OK,
       "Product updated successfully",
-      { product: updatedProduct }
+      updatedProduct 
     );
 
   } catch (error) {
@@ -88,131 +88,6 @@ const updateProduct = async (req, res) => {
     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
   }
 };
-
-// const getAllProduct = async (req, res) => {
-//   try {
-//     const products = await productService.findAll();
-
-//     // First add totalPdfPages to each product
-//     const productsWithPdfCount = await Promise.all(
-//       products.map(async (product) => {
-//         const productObj = product.toObject ? product.toObject() : product;
-//         let totalPdfPages = 0;
-
-//         if (product.pdf?.url) {
-//           try {
-//             const publicId = getCloudinaryPublicId(product.pdf.url);
-//             if (publicId) {
-//               totalPdfPages = await getPdfPages(publicId) || 0;
-//             }
-//           } catch (err) {
-//             console.error(`Error getting PDF pages for ${product._id}:`, err);
-//           }
-//         }
-
-//         return { 
-//           ...productObj,
-//           totalPdfPages 
-//         };
-//       })
-//     );
-
-//     // Keep your original catalog structure
-//     const catalogData = {};
-//     productsWithPdfCount.forEach(product => {
-//       const categoryId = product.category?._id?.toString() || "unknownCategoryId";
-//       const subCategoryId = product.subCategory?._id?.toString() || "unknownSubCategoryId";
-
-//       if (!catalogData[categoryId]) {
-//         catalogData[categoryId] = {};
-//       }
-
-//       if (!catalogData[categoryId][subCategoryId]) {
-//         catalogData[categoryId][subCategoryId] = [];
-//       }
-
-//       catalogData[categoryId][subCategoryId].push({
-//         id: product._id,
-//         ...product // This now includes totalPdfPages
-//       });
-//     });
-
-//     return successResponse(
-//       req,
-//       res,
-//       status.OK,
-//       "Product catalog fetched successfully", 
-//       { catalogData }
-//     );
-//   } catch (error) {
-//     console.error(error);
-//     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
-//   }
-// };
-
-// const getAllProduct = async (req, res) => {
-//   try {
-//     const products = await productService.findAll();
-//     console.log("Fetched products:", products);
-
-//     const productsWithPdfData = await Promise.all(
-//       products.map(async (product) => {
-//         const productData = product.toObject ? product.toObject() : product;
-//         let totalPages = 0; // Default to 0 pages
-
-//         if (product.pdf?.url) {
-//           try {
-//             const publicId = getCloudinaryPublicId(product.pdf.url);
-//             if (publicId) {
-//               totalPages = await getPdfPages(publicId) || 0;
-//             }
-//           } catch (err) {
-//             console.error(`Error processing PDF for ${product._id}:`, err);
-//           }
-//         }
-
-//         // Add totalPages field instead of pdfPages array
-//         return { 
-//           ...productData,
-//           pdfPages: totalPages 
-//         };
-//       })
-//     );
-
-//     const catalogData = {};
-//     productsWithPdfData.forEach(product => {
-//       const categoryId = product.category?._id?.toString() || "unknownCategoryId";
-//       const subCategoryId = product.subCategory?._id?.toString() || "unknownSubCategoryId";
-
-//       if (!catalogData[categoryId]) {
-//         catalogData[categoryId] = {};
-//       }
-
-//       if (!catalogData[categoryId][subCategoryId]) {
-//         catalogData[categoryId][subCategoryId] = [];
-//       }
-
-//       catalogData[categoryId][subCategoryId].push({
-//         id: product._id,
-//         ...product // Now includes pdfPages as a number
-//       });
-//     });
-
-//     return successResponse(
-//       req,
-//       res,
-//       status.OK,
-//       "Product catalog fetched successfully",
-//       { catalogData }
-//     );
-//   } catch (error) {
-//     console.error(error);
-//     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
-//   }
-// };
-
-
-// product.controller.js
 
 const getAllProduct = async (req, res) => {
   try {
@@ -266,13 +141,12 @@ const getAllProduct = async (req, res) => {
         }
 
         catalogData[categoryId][subCategoryId].push({
-          id: product._id,
           ...product
         });
       });
-      responseData = { catalogData };
+      responseData = catalogData ;
     } else {
-      responseData = { products: productsData };
+      responseData = productsData ;
     }
 
     return successResponse(
@@ -294,7 +168,7 @@ const getProductById = async (req, res) => {
     if (!product) {
       return errorResponse(req, res, status.NOT_FOUND, "Product not found");
     }
-    return successResponse(req, res, status.OK, "Product fetched successfully", { product });
+    return successResponse(req, res, status.OK, "Product fetched successfully",  product );
   } catch (error) {
     console.error(error);
     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
@@ -339,7 +213,6 @@ const deleteProduct = async (req, res) => {
     return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
   }
 }
-
 
 module.exports = {
   addProduct,

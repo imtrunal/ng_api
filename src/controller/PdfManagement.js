@@ -1,23 +1,20 @@
 const PdfFiles = require("../Model/pdfFiles");
-const { getCloudinaryPublicId, destroyImage } = require("../utils/upload");
-
+const { errorResponse, successResponse } = require("../utils/apiResponse");
+const { default: status } = require("http-status");
+const pdfService = require("../Service/PdfService");
 
 const getPDF = async (req, res) => {
     try {
-        const pdfFile = await PdfFiles.findOne({ short: req.params.shortUrl });
+        const pdfFile = await pdfService.getPdfUrl(req.params.shortUrl);
         if (!pdfFile) {
             return res.status(404).json({ error: 'File not found' });
         }
-        return res.json({ success: true, url: pdfFile.url, message: "PDF fetched successfully" });
+        return successResponse(req, res, status.OK, "PDF fetched successfully", { url: pdfFile.url });
     } catch (error) {
         console.error('Error fetching PDF:', error);
-        return res.status(500).send({
-            success: false,
-            message: error.message,
-        });
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
     }
 }
-
 
 module.exports = {
     getPDF,

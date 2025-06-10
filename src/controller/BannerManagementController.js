@@ -12,7 +12,7 @@ const addBanner = async (req, res) => {
 
         const banner = await bannerService.add(bannerFile, req.body);
 
-        return successResponse(req, res, status.CREATED, "Banner added successfully", {banner});
+        return successResponse(req, res, status.CREATED, "Banner added successfully", banner);
     } catch (error) {
         console.error(error);
         return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
@@ -22,7 +22,7 @@ const addBanner = async (req, res) => {
 const getAllBanners = async (req, res) => {
     try {
         const banners = await bannerService.findAll();
-        return successResponse(req, res, status.OK, "Banners fetched successfully", { data: banners });
+        return successResponse(req, res, status.OK, "Banners fetched successfully", banners );
     } catch (error) {
         console.error(error);
         return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);

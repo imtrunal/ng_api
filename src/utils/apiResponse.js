@@ -3,7 +3,7 @@ const successResponse = (req, res, code = 200, message, data = null) => {
         code,
         success: true,
         message,
-        ...data,
+        data,
     });
 }
 

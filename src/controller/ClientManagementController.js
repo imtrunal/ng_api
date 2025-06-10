@@ -1,28 +1,23 @@
+const { default: status } = require("http-status");
 const clientService = require("../Service/ClientService");
+const { errorResponse, successResponse } = require("../utils/apiResponse");
 
 const addNewClient = async (req, res) => {
     try {
         const logos = req.files?.clientLogo;
         const createdClients = await clientService.addClients(logos);
-
-        return res.status(201).json(createdClients);
+        return successResponse(req, res, status.OK, "New Client Added Successfully!!", createdClients);
     } catch (error) {
-        return res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
     }
 };
 
 const getAllClients = async (req, res) => {
     try {
         const clients = await clientService.findAllClients();
-        return res.status(200).json(clients);
+        return successResponse(req, res, status.OK, "Clients Fetched Successfully", clients);
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
     }
 };
 
@@ -30,20 +25,11 @@ const deleteClient = async (req, res) => {
     try {
         const deleted = await clientService.deleteClientById(req.params.id);
         if (!deleted) {
-            return res.status(404).json({
-                success: false,
-                message: "Client not found"
-            });
+            return errorResponse(req, res, status.NOT_FOUND, "Client Not Found");
         }
-        return res.status(200).json({
-            success: true,
-            message: "Client deleted successfully"
-        });
+        return successResponse(req, res, status.OK, "Client Deleted Successfully!!");
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
     }
 };
 

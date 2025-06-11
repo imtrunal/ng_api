@@ -1,7 +1,7 @@
 const User = require("../Model/User");
 
 // Create a new user
-module.exports.createUser = async (user) => {
+const createUser = async (user) => {
     try {
         const newUser = new User(user);
         return await newUser.save();
@@ -11,7 +11,7 @@ module.exports.createUser = async (user) => {
 }
 
 // Find a user
-module.exports.findUser = async (email) => {
+const findUser = async (email) => {
     try {
         return await User.findOne({
             email
@@ -23,7 +23,7 @@ module.exports.findUser = async (email) => {
 }
 
 //Find User By Id
-module.exports.findUserById = async (id) => {
+const findUserById = async (id) => {
     try {
         return await User.findById(id);
     } catch (error) {
@@ -31,3 +31,8 @@ module.exports.findUserById = async (id) => {
     }
 }
 
+module.exports={
+    createUser,
+    findUser,
+    findUserById
+}

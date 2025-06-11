@@ -4,7 +4,7 @@ const Products = require("../Model/product");
 const VideoFiles = require("../Model/videoFiles");
 const { getCloudinaryPublicId, destroyImage, getPdfPages } = require("../utils/upload");
 
-module.exports.createProduct = async ({ productData, imageFiles, pdfFile, videoFile }) => {
+const createProduct = async ({ productData, imageFiles, pdfFile, videoFile }) => {
     try {
         const imageDocs = [];
         let pdfDoc = null;
@@ -77,7 +77,7 @@ module.exports.createProduct = async ({ productData, imageFiles, pdfFile, videoF
     }
 };
 
-module.exports.updateProduct = async ({
+const updateProduct = async ({
     productId,
     productData,
     imageFiles,
@@ -243,19 +243,7 @@ module.exports.updateProduct = async ({
     }
 };
 
-// module.exports.findAll = async () => {
-//     try {
-//         const allProducts = await Products.find().populate("category", "name").populate("subCategory").populate("image").populate("pdf").populate("video").sort({ createdAt: -1 }).lean();
-//         return allProducts;
-//     } catch (error) {
-//         throw new Error(error);
-//     }
-// }
-
-
-// product.service.js
-
-module.exports.findAll = async (filters = {}) => {
+const findAll = async (filters = {}) => {
     try {
         const {
             category,
@@ -359,7 +347,7 @@ module.exports.findAll = async (filters = {}) => {
     }
 };
 
-module.exports.findOne = async (id) => {
+const findOne = async (id) => {
     try {
         const product = await Products.findById(id).populate("category", "name").populate("subCategory").populate("image").populate("pdf").populate("video").sort({ createdAt: -1 }).lean();
         return product;
@@ -368,7 +356,7 @@ module.exports.findOne = async (id) => {
     }
 }
 
-module.exports.deleteOne = async (id) => {
+const deleteOne = async (id) => {
     try {
         const product = await Products.findByIdAndDelete(id);
         if (product.image) {
@@ -384,4 +372,12 @@ module.exports.deleteOne = async (id) => {
     } catch (error) {
         throw new Error(error);
     }
+}
+
+module.exports = {
+    createProduct,
+    updateProduct,
+    findAll,
+    findOne,
+    deleteOne
 }

@@ -1,7 +1,7 @@
 const Token = require("../Model/token");
 
 //check token
-module.exports.checkToken = async (id) => {
+const checkToken = async (id) => {
     try {
         return Token.findOne({ userId: id });
     } catch (error) {
@@ -10,7 +10,7 @@ module.exports.checkToken = async (id) => {
 }
 
 //generate new Token
-module.exports.generateToken = async (id, token) => {
+const generateToken = async (id, token) => {
     const storedToken = new Token({
         userId: id,
         token: token,
@@ -20,8 +20,14 @@ module.exports.generateToken = async (id, token) => {
 }
 
 //update Token
-module.exports.updateToken = async (id, token) => {
+const updateToken = async (id, token) => {
     const updateToken = await Token.findOneAndUpdate({ userId: id }, { token }, { new: true });
     await updateToken.save();
     return updateToken;
+}
+
+module.exports={
+    checkToken,
+    generateToken,
+    updateToken
 }

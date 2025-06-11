@@ -9,7 +9,7 @@ const {
     updateCategoryName,
     deleteCategory,
     addNewSubCategory,
-    removeSubCategory } = require('../controller/CategoryController');
+    removeSubCategory } = require('../controller/CategoryManagemntController');
 const { authorization } = require('../middleware/auth.middleware');
 
 router.post('/bulk', authorization, addBulkCategory);

@@ -8,8 +8,11 @@ const {
 } = require("../controller/ClientManagementController")
 const { authorization } = require("../middleware/auth.middleware");
 
+//Add new client
 router.post('/', authorization, upload, addNewClient);
+//Get all clients
 router.get('/', getAllClients);
+//Delete client
 router.delete('/:id', authorization, deleteClient);
 
 module.exports = router;

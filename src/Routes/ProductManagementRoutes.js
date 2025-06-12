@@ -4,10 +4,15 @@ const { upload } = require('../utils/upload');
 const { addProduct, getAllProduct, deleteProduct, getProductById, updateProduct } = require('../controller/ProductManagementController');
 const {authorization}=require("../middleware/auth.middleware")
 
-router.post('/add',authorization, upload, addProduct);
-router.get('/list', getAllProduct);
+//Add Product
+router.post('/',authorization, upload, addProduct);
+//Get All Products
+router.get('/', getAllProduct);
+//Get Product by Id
 router.get("/:id", getProductById);
-router.put("/update/:id", authorization,upload, updateProduct);
-router.delete("/delete/:id",authorization, deleteProduct);
+//Update Product
+router.put("/:id", authorization,upload, updateProduct);
+//Delete Product
+router.delete("/:id",authorization, deleteProduct);
 
 module.exports = router;

@@ -237,15 +237,16 @@ app.post("/eklg17-convert", async (req, res) => {
     }
 });
 
-app.post("/unique-convert", (req, res) => {
+app.post("/unique-convert", async(req, res) => {
     try {
         const { text } = req.body;
         if (!text) return res.status(400).json({ error: "No text provided!" });
 
         const convertedText = convertToUnicode(text);
+        await incrementTotalCount('totalEKLGUse', 1);
         return successResponse(req, res, status.OK, "Unique converted text", convertedText);
     } catch (error) {
-        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);s
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message); s
     }
 });
 
@@ -270,7 +271,7 @@ app.use("/clients", require("./src/Routes/ClientsManagementRoutes"));
 app.use("/colors", require("./src/Routes/ColorRoutes"));
 app.use("/shapes", require("./src/Routes/ShapeRoutes"));
 app.use("/statistics", require("./src/Routes/StatisticsRoutes"));
-app.use("/testimonial", require("./src/Routes/TestimonialRoutes"));
+app.use("/testimonials", require("./src/Routes/TestimonialRoutes"));
 
 
 app.listen(PORT, () => console.log(`Server is running on ${PORT}`));

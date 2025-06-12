@@ -12,6 +12,16 @@ const addTestimonial = async (req, res) => {
     }
 }
 
+const editTestimonial = async (req, res) => {
+    try {        
+        const testimonial = await testimonialService.editReview(req.params.id,req.body);
+        return successResponse(req, res, status.CREATED, "Testimonial updated successfully", testimonial);
+    } catch (error) {
+        console.log(error);
+        return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);
+    }
+}
+
 const getTestimonials = async (req, res) => {
     try {
         const testimonial = await testimonialService.getALlReview();
@@ -24,7 +34,7 @@ const getTestimonials = async (req, res) => {
 
 const deleteTestimonial = async (req, res) => {
     try {
-        const testimonial = await testimonialService.deleteReview(req.params.id);
+        const testimonial = await testimonialService.deleteReview(req.params.id);        
         return successResponse(req, res, status.OK, "Testimonial deleted successfully", testimonial);
     } catch (error) {
         console.log(error);
@@ -35,5 +45,6 @@ const deleteTestimonial = async (req, res) => {
 module.exports = {
     addTestimonial,
     getTestimonials,
+    editTestimonial,
     deleteTestimonial
 }

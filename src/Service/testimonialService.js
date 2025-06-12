@@ -12,7 +12,17 @@ const addReview = async (data) => {
 
 const getALlReview = async () => {
     try {
-        return await Testimonial.find().sort({createdAt:-1}).lean();
+        return await Testimonial.find().sort({ createdAt: -1 }).lean();
+    } catch (error) {
+        throw new Error(error || "Failed to add new review")
+    }
+}
+
+const editReview = async (id, data) => {
+    try {
+        const review = await Testimonial.findByIdAndUpdate(id, data, { new: true });
+        await review.save();
+        return review;
     } catch (error) {
         throw new Error(error || "Failed to add new review")
     }
@@ -20,7 +30,7 @@ const getALlReview = async () => {
 
 const deleteReview = async (id) => {
     try {
-        return await Testimonial.findOneAndDelete(id);
+        return await Testimonial.findByIdAndDelete(id);
     } catch (error) {
         throw new Error(error || "Failed to delete review0");
     }
@@ -29,5 +39,6 @@ const deleteReview = async (id) => {
 module.exports = {
     addReview,
     getALlReview,
+    editReview,
     deleteReview
 }

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+//name change
 const statisticsSchema = new mongoose.Schema({
     totalVisiters: {
         type: Number,

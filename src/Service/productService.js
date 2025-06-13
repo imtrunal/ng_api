@@ -2,6 +2,7 @@ const ImageFiles = require("../Model/imageFiles");
 const PdfFiles = require("../Model/pdfFiles");
 const Products = require("../Model/product");
 const VideoFiles = require("../Model/videoFiles");
+const getPdfPageCountFromUrl = require("../utils/getPdfPages");
 const { getCloudinaryPublicId, destroyImage, getPdfPages } = require("../utils/upload");
 
 const createProduct = async ({ productData, imageFiles, pdfFile, videoFile }) => {
@@ -29,10 +30,11 @@ const createProduct = async ({ productData, imageFiles, pdfFile, videoFile }) =>
         }
 
         if (pdfFile) {
-            const publicId = getCloudinaryPublicId(product.pdf.url);
+            const publicId = getCloudinaryPublicId(pdfFile.path);
             let totalPages = 1;
             if (publicId) {
-                totalPages = await getPdfPages(publicId);
+                totalPages = await getPdfPageCountFromUrl(pdfFile.path);
+                console.log('Total Pages:', totalPages);
             }
             const pdf = new PdfFiles({
                 filename: pdfFile.originalname,

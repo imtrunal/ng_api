@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Statistics = require("../Model/statistics");
+const Statistics = require("../Model/Statistics");
 const { default: status } = require("http-status");
 const { authorization } = require("../middleware/auth.middleware");
 const { successResponse, errorResponse } = require("../utils/apiResponse");

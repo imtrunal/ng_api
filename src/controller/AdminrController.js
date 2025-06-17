@@ -43,7 +43,7 @@ const userLogin = async (req, res) => {
 
         const user = await userService.findUser(email);
         if (!user) {
-            return errorResponse(req, res, status.NOT_FOUND,"User not found");
+            return errorResponse(req, res, status.NOT_FOUND, "User not found");
         }
 
         const isPasswordMatch = await bcrypt.compare(password, user.password);
@@ -52,13 +52,7 @@ const userLogin = async (req, res) => {
         }
 
         const sessionResponse = await createUserSession(user);
-        const token = await checkToken(user._id);
-        if (token) {
-            await updateToken(user._id, sessionResponse.sessionToken);
-        }
-        else {
-            await generateToken(user._id, sessionResponse.sessionToken);
-        }
+        await generateToken(user._id, sessionResponse.sessionToken);
         return successResponse(req, res, status.OK, "User Logged In!", { token: sessionResponse.sessionToken, user: user });
     } catch (error) {
         console.log(error);

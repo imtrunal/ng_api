@@ -2,81 +2,131 @@ const ImageFiles = require("../Model/imageFiles");
 const PdfFiles = require("../Model/pdfFiles");
 const Products = require("../Model/product");
 const VideoFiles = require("../Model/videoFiles");
-const getPdfPageCountFromUrl = require("../utils/getPdfPages");
-const { getCloudinaryPublicId, destroyImage, getPdfPages } = require("../utils/upload");
+const {  destroyFile, getFileId } = require("../utils/upload");
+
+// const createProduct = async ({ productData, imageFiles, pdfFile, videoFile }) => {
+//     try {
+//         const imageDocs = [];
+//         let pdfDoc = null;
+//         let videoDoc = null;
+
+//         const tasks = [];
+
+//         if (imageFiles && imageFiles.length > 0) {
+//             for (const img of imageFiles) {
+//                 if (img) {
+//                     const image = new ImageFiles({
+//                         filename: img.originalname,
+//                         url: img.path,
+//                     });
+//                     tasks.push(
+//                         image.save().then(saved => {
+//                             imageDocs.push(saved._id);
+//                         })
+//                     );
+//                 }
+//             }
+//         }
+
+//         if (pdfFile) {
+//             const publicId = getCloudinaryPublicId(pdfFile.path);
+//             let totalPages = 1;
+//             if (publicId) {
+//                 totalPages = await getPdfPageCountFromUrl(pdfFile.path);
+//                 console.log('Total Pages:', totalPages);
+//             }
+//             const pdf = new PdfFiles({
+//                 filename: pdfFile.originalname,
+//                 url: pdfFile.path,
+//                 short: productData.title,
+//                 totalPages: totalPages,
+//             });
+//             tasks.push(
+//                 pdf.save().then(saved => {
+//                     pdfDoc = saved._id;
+//                 })
+//             );
+//         }
+
+//         if (videoFile) {
+//             const video = new VideoFiles({
+//                 filename: videoFile.originalname,
+//                 url: videoFile.path,
+//             });
+//             tasks.push(
+//                 video.save().then(saved => {
+//                     videoDoc = saved._id;
+//                 })
+//             );
+//         }
+
+//         await Promise.all(tasks);
+
+//         // Create the product with references to all files
+//         const product = new Products({
+//             ...productData,
+//             image: imageDocs,
+//             pdf: pdfDoc,
+//             video: videoDoc,
+//         });
+
+//         await product.save();
+//         return product;
+//     } catch (error) {
+//         console.error("Error in createProduct:", error);
+//         throw new Error(error.message || "Failed to create product");
+//     }
+// };
 
 const createProduct = async ({ productData, imageFiles, pdfFile, videoFile }) => {
-    try {
-        const imageDocs = [];
-        let pdfDoc = null;
-        let videoDoc = null;
+  try {
+    const imageDocs = [];
+    let pdfDoc = null;
+    let videoDoc = null;
 
-        const tasks = [];
-
-        if (imageFiles && imageFiles.length > 0) {
-            for (const img of imageFiles) {
-                if (img) {
-                    const image = new ImageFiles({
-                        filename: img.originalname,
-                        url: img.path,
-                    });
-                    tasks.push(
-                        image.save().then(saved => {
-                            imageDocs.push(saved._id);
-                        })
-                    );
-                }
-            }
-        }
-
-        if (pdfFile) {
-            const publicId = getCloudinaryPublicId(pdfFile.path);
-            let totalPages = 1;
-            if (publicId) {
-                totalPages = await getPdfPageCountFromUrl(pdfFile.path);
-                console.log('Total Pages:', totalPages);
-            }
-            const pdf = new PdfFiles({
-                filename: pdfFile.originalname,
-                url: pdfFile.path,
-                short: productData.title,
-                totalPages: totalPages,
-            });
-            tasks.push(
-                pdf.save().then(saved => {
-                    pdfDoc = saved._id;
-                })
-            );
-        }
-
-        if (videoFile) {
-            const video = new VideoFiles({
-                filename: videoFile.originalname,
-                url: videoFile.path,
-            });
-            tasks.push(
-                video.save().then(saved => {
-                    videoDoc = saved._id;
-                })
-            );
-        }
-
-        await Promise.all(tasks);
-
-        // Create the product with references to all files
-        const product = new Products({
-            ...productData,
-            image: imageDocs,
-            pdf: pdfDoc,
-            video: videoDoc,
-        });
-
-        await product.save();
-        return product;
-    } catch (error) {
-        console.error("Error in createProduct:", error);
-        throw new Error(error.message || "Failed to create product");
+    // === Save Images ===
+    if (imageFiles && imageFiles.length > 0) {
+      for (const url of imageFiles) {
+        const image = new ImageFiles({ filename: url.split("/").pop(), url });
+        const saved = await image.save();
+        imageDocs.push(saved._id);
+      }
     }
+
+    // === Save PDF ===
+    if (pdfFile) {
+      const pdf = new PdfFiles({
+        filename: pdfFile.split("/").pop(),
+        url: pdfFile,
+        short: productData.title
+      });
+      pdfDoc = (await pdf.save())._id;
+    }
+
+    // === Save Video ===
+    if (videoFile) {
+      const video = new VideoFiles({
+        filename: videoFile.split("/").pop(),
+        url: videoFile
+      });
+      videoDoc = (await video.save())._id;
+    }
+
+    // === Create Product ===
+    const product = new Products({
+      ...productData,
+      image: imageDocs,
+      pdf: pdfDoc,
+      video: videoDoc
+    });
+
+    await product.save();
+    return product;
+
+  } catch (error) {
+    console.error("Error in createProduct:", error);
+    throw new Error(error.message || "Failed to create product");
+  }
 };
 
 const updateProduct = async ({
@@ -99,11 +149,11 @@ const updateProduct = async ({
         let newVideoId = existingProduct.video;
 
         // Helper function to add Cloudinary deletion tasks
-        const addCloudinaryDeletion = async (file, resourceType = 'image') => {
+        const addCloudinaryDeletion = async (file) => {
             if (file && file.url) {
-                const publicId = getCloudinaryPublicId(file.url);
+                const publicId = getFileId(file.url);
                 if (publicId) {
-                    cloudinaryDeletions.push(destroyImage(publicId, resourceType));
+                    cloudinaryDeletions.push(destroyFile(publicId));
                 }
             }
         };

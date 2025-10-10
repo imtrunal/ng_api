@@ -65,3 +65,5 @@ pids/
 debug.log
 error.log
 trace.log
+
+/uploads/

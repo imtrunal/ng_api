@@ -13,6 +13,7 @@ const { upload } = require('./src/utils/upload');
 const { successResponse, errorResponse } = require('./src/utils/apiResponse');
 const { default: status } = require('http-status');
 const { incrementTotalCount } = require('./src/utils/updateStatistics');
+const { convert } = require("pdf-poppler"); 
 
 connectDb();
 app.use(cors({
@@ -273,5 +274,103 @@ app.use("/shapes", require("./src/Routes/ShapeRoutes"));
 app.use("/statistics", require("./src/Routes/StatisticsRoutes"));
 app.use("/testimonials", require("./src/Routes/TestimonialRoutes"));
 
+
+
+const pdfParse = require("pdf-parse");
+const mime = require("mime-types");
+
+app.use("/uploads", express.static(path.join(__dirname,"uploads")));
+
+function findFileRecursive(baseDir, filename) {
+  const files = fs.readdirSync(baseDir);
+  for (let file of files) {
+    const fullPath = path.join(baseDir, file);
+    const stats = fs.statSync(fullPath);
+    if (stats.isDirectory()) {
+      const found = findFileRecursive(fullPath, filename);
+      if (found) return found;
+    } else if (file === filename) {
+      return fullPath;
+    }
+  }
+  return null;
+}
+
+app.get("/files/pages/:filename", async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const uploadsDir = path.join(__dirname, "uploads");
+
+    const filePath = findFileRecursive(uploadsDir, filename);
+
+    if (!filePath) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    if (path.extname(filename).toLowerCase() === ".pdf") {
+      const dataBuffer = fs.readFileSync(filePath);
+      const pdfData = await pdfParse(dataBuffer);
+      const totalPages = pdfData.numpages;
+
+      const pageLinks = [];
+      for (let i = 1; i <= totalPages; i++) {
+        pageLinks.push(`${req.protocol}://${req.get("host")}/files/p_${i}/${filename}`);
+      }
+
+      const response = { totalPages, pageLinks };
+      return res.json(response);
+    }
+
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch file" });
+  }
+});
+
+app.get("/files/p_:page/:filename", async (req, res) => {
+  try {
+    const { page, filename } = req.params;
+    const uploadsDir = path.join(__dirname,"uploads");
+    const pdfPath = findFileRecursive(uploadsDir, filename);
+
+    if (!pdfPath) {
+      return res.status(404).json({ error: "PDF not found" });
+    }
+    
+    const outDir = path.join(__dirname, "uploads", "cache");
+    if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+
+    const outPrefix = `pdf-${filename.replace(/\..+$/, "")}-${page}`;
+    const opts = {
+      format: "png",
+      out_dir: outDir,
+      out_prefix: outPrefix,
+      page: parseInt(page),
+      dpi: 50,
+    };
+
+    await convert(pdfPath, opts);
+
+    const generatedFile = fs
+      .readdirSync(outDir)
+      .find(f => f.startsWith(outPrefix) && f.endsWith(".png"));
+
+    if (!generatedFile) {
+      throw new Error(`No PNG generated for ${filename} page ${page}`);
+    }
+
+    const outputFile = path.join(outDir, generatedFile);
+    const imgBuffer = fs.readFileSync(outputFile);
+
+    res.setHeader("Content-Type", "image/png");
+    res.send(imgBuffer);
+
+    fs.unlink(outputFile, () => {});
+  } catch (error) {
+    console.error("❌ PDF Page Render Error:", error);
+    res.status(500).json({ error: "Failed to render PDF page" });
+  }
+});
 
 app.listen(PORT, () => console.log(`Server is running on ${PORT}`));

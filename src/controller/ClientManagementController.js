@@ -1,10 +1,14 @@
 const { default: status } = require("http-status");
 const clientService = require("../Service/ClientService");
 const { errorResponse, successResponse } = require("../utils/apiResponse");
+const { destroyFile } = require("../utils/upload");
 
 const addNewClient = async (req, res) => {
     try {
         const logos = req.files?.clientLogo;
+        logos.forEach(file => {
+            file.path =`${req.protocol}://${req.get("host")}/uploads/clients/${file.filename}`;
+        });
         const createdClients = await clientService.addClients(logos);
         return successResponse(req, res, status.OK, "New Client Added Successfully!!", createdClients);
     } catch (error) {
@@ -27,6 +31,7 @@ const deleteClient = async (req, res) => {
         if (!deleted) {
             return errorResponse(req, res, status.NOT_FOUND, "Client Not Found");
         }
+        await destroyFile(deleted.link);
         return successResponse(req, res, status.OK, "Client Deleted Successfully!!");
     } catch (error) {
         return errorResponse(req, res, status.INTERNAL_SERVER_ERROR, error.message);

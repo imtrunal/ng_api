@@ -14,6 +14,7 @@ const { successResponse, errorResponse } = require('./src/utils/apiResponse');
 const { default: status } = require('http-status');
 const { incrementTotalCount } = require('./src/utils/updateStatistics');
 const { convert } = require("pdf-poppler"); 
+const pdfParse = require("pdf-parse");
 
 connectDb();
 app.use(cors({
@@ -274,12 +275,32 @@ app.use("/shapes", require("./src/Routes/ShapeRoutes"));
 app.use("/statistics", require("./src/Routes/StatisticsRoutes"));
 app.use("/testimonials", require("./src/Routes/TestimonialRoutes"));
 
+// app.get("/uploads/products/videos/:filename", async (req, res) => {
+//   try {
+//     const { filename } = req.params;
+//     const uploadsDir = path.join(__dirname, "uploads");
 
+//     const filePath = findFileRecursive(uploadsDir, filename);
+//     if (!filePath) {
+//       return res.status(404).json({ error: "File not found" });
+//     }
 
-const pdfParse = require("pdf-parse");
-const mime = require("mime-types");
+//     res.setHeader("Content-Type", "video/mp4");
+//     res.setHeader("Content-Disposition", "inline; filename=\"video.mp4\"");
+//     z
+//     const stream = fs.createReadStream(filePath);
+//     stream.pipe(res);
 
-app.use("/uploads", express.static(path.join(__dirname,"uploads")));
+//   } catch (error) {
+//     res.status(500).json({ error: "Failed to open file" });
+//   }
+// });
+
+app.use("/uploads", express.static(path.join(__dirname,"uploads"), {
+  // filter: (req, res) => {
+  //   return !req.path.includes('/products/videos/');
+  // }
+}));
 
 function findFileRecursive(baseDir, filename) {
   const files = fs.readdirSync(baseDir);

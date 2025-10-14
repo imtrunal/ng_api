@@ -129,7 +129,11 @@ const updateProduct = async (req, res) => {
     const pdfFile = req.files?.productPdf?.[0] || null;
     const videoFile = req.files?.productVideo?.[0] || null;
     const baseUrl = `${req.protocol}://${req.get("host")}/uploads/products`;
-    videoFile.path = `${baseUrl}/videos/${videoFile.filename}`;
+    if (videoFile) videoFile.path = `${baseUrl}/videos/${videoFile.filename}`;
+    if (pdfFile) pdfFile.path = `${baseUrl}/pdfs/${pdfFile.filename}`;
+    imageFiles.forEach((file) => {
+      file.path = `${baseUrl}/images/${file.filename}`;
+    });
 
     const updatedProduct = await productService.updateProduct({
       productId,
@@ -258,17 +262,17 @@ const deleteProduct = async (req, res) => {
     if (product.image && product.image.length > 0) {
       product.image.forEach((img) => {
         if (img.url) {
-          deletionPromises.push(destroyFile(id));
+          deletionPromises.push(destroyFile(img.url));
         }
       });
     }
 
     if (product.pdf?.url) {
-      deletionPromises.push(destroyFile(pdfId));
+      deletionPromises.push(destroyFile(product.pdf?.url));
     }
 
     if (product.video?.url) {
-      deletionPromises.push(destroyFile(videoId));
+      deletionPromises.push(destroyFile(product.video?.url));
     }
 
     await Promise.all(deletionPromises);

@@ -62,7 +62,7 @@
 //             resource_type: 'image',
 //         });
 //         console.log(`PDF resource fetched: ${publicId}`, result);
-        
+
 //         return result.pages;
 //     } catch (error) {        
 //         return 1;
@@ -108,11 +108,11 @@ const fs = require("fs");
 require("dotenv").config();
 
 const folderConfigs = {
-    'productImage': { folder: 'products/images', resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp','gif'] },
-    'productPdf': { folder: 'products/pdfs', resource_type: 'auto', allowed_formats: ['pdf'], format: 'pdf' },
-    'productVideo': { folder: 'products/videos', resource_type: 'video', allowed_formats: ['mp4', 'mov', 'avi', 'webm'] },
-    'clientLogo': { folder: 'clients', resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp'] },
-    'banner': { folder: 'banners', resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp'] }
+  'productImage': { folder: 'products/images', resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'] },
+  'productPdf': { folder: 'products/pdfs', resource_type: 'auto', allowed_formats: ['pdf'], format: 'pdf' },
+  'productVideo': { folder: 'products/videos', resource_type: 'video', allowed_formats: ['mp4', 'mov', 'avi', 'webm'] },
+  'clientLogo': { folder: 'clients', resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp'] },
+  'banner': { folder: 'banners', resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp'] }
 };
 
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
@@ -144,41 +144,38 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage }).fields([
-    { name: 'productImage', maxCount: 20 },
-    { name: 'productPdf' },
-    { name: 'productVideo' },
-    { name: 'clientLogo', maxCount: 50 },
-    { name: 'pdf', maxCount: 1 },
-    { name: 'banner', maxCount: 1 },
-    { name: 'attachedFiles', maxCount: 1 },
+  { name: 'productImage', maxCount: 20 },
+  { name: 'productPdf' },
+  { name: 'productVideo' },
+  { name: 'clientLogo', maxCount: 50 },
+  { name: 'pdf', maxCount: 1 },
+  { name: 'banner', maxCount: 1 },
+  { name: 'attachedFiles', maxCount: 1 },
 ]);
 
 const getFileId = (filePath) => {
   const cleaned = filePath
     .replace(/^https?:\/\/[^/]+\/uploads\//, "")
-    .replace(/^\/?uploads\//, "");               
+    .replace(/^\/?uploads\//, "");
   return `/${cleaned}`;
 };
 
 const destroyFile = async (filePath) => {
   try {
-    filePath=getFileId(filePath);
-    const relative = filePath.startsWith("/")
-      ? filePath.slice(1)
-      : filePath;
-
+    filePath = getFileId(filePath);
+    const relative = filePath.startsWith("/") ? filePath.slice(1) : filePath;
     const absolutePath = path.join(UPLOAD_DIR, relative);
 
     if (fs.existsSync(absolutePath)) {
       fs.unlinkSync(absolutePath);
       return true;
+    } else {
+      console.warn(`⚠️ File not found: ${absolutePath} — skipping...`);
+      return true; // ✅ Continue execution even if file not found
     }
-
-    console.error(`File not found: ${absolutePath}`);
-    return false;
   } catch (err) {
     console.error("Error deleting file:", err);
-    return false;
+    return true; // ✅ Still return true so next code continues
   }
 };
 

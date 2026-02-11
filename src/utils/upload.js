@@ -123,9 +123,7 @@ function cleanFileName(originalName) {
   const ext = path.extname(originalName);
   const base = path.basename(originalName, ext);
 
-  const cleanedBase = base.replace(/[^a-zA-Z0-9]/g, "");
-
-  const finalBase = cleanedBase || `file${Date.now()}`;
+  const finalBase = base.trim() || `file${Date.now()}`;
 
   return `${finalBase}${ext.toLowerCase()}`;
 }

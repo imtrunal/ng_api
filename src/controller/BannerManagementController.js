@@ -9,7 +9,8 @@ const addBanner = async (req, res) => {
         if (!bannerFile) {
             return errorResponse(req, res, status.BAD_REQUEST, "Banner file is required");
         }
-        bannerFile.path = `${req.protocol}://${req.get("host")}/uploads/banners/${bannerFile.filename}`;
+        // bannerFile.path = `${req.protocol}://${req.get("host")}/uploads/banners/${bannerFile.filename}`;
+        bannerFile.path = `/uploads/banners/${bannerFile.filename}`;
         const banner = await bannerService.add(bannerFile, req.body);
 
         return successResponse(req, res, status.CREATED, "Banner added successfully", banner);

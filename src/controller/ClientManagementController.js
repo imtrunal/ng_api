@@ -7,7 +7,8 @@ const addNewClient = async (req, res) => {
     try {
         const logos = req.files?.clientLogo;
         logos.forEach(file => {
-            file.path =`${req.protocol}://${req.get("host")}/uploads/clients/${file.filename}`;
+            // file.path =`${req.protocol}://${req.get("host")}/uploads/clients/${file.filename}`;
+            file.path =`/uploads/clients/${file.filename}`;
         });
         const createdClients = await clientService.addClients(logos);
         return successResponse(req, res, status.OK, "New Client Added Successfully!!", createdClients);

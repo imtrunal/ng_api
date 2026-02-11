@@ -69,7 +69,8 @@ const addProduct = async (req, res) => {
     const allImages = req.files?.productImage || [];
     const allPdfs = req.files?.productPdf || [];
     const allVideos = req.files?.productVideo || [];
-    const baseUrl = `${req.protocol}://${req.get("host")}/uploads/products`;
+    // const baseUrl = `${req.protocol}://${req.get("host")}/uploads/products`;
+    const baseUrl = `/uploads/products`;
     let imageIndex = 0;
     let pdfIndex = 0;
     let videoIndex = 0;
@@ -127,8 +128,9 @@ const updateProduct = async (req, res) => {
     const productData = JSON.parse(req.body.productData);
     const imageFiles = req.files?.productImage || [];
     const pdfFile = req.files?.productPdf?.[0] || null;
-    const videoFile = req.files?.productVideo?.[0] || null;
-    const baseUrl = `${req.protocol}://${req.get("host")}/uploads/products`;
+    const videoFile = req.files?.productVideo?.[0] || null;    
+    // const baseUrl = `${req.protocol}://${req.get("host")}/uploads/products`;
+    const baseUrl = `/uploads/products`;
     if (videoFile) videoFile.path = `${baseUrl}/videos/${videoFile.filename}`;
     if (pdfFile) pdfFile.path = `${baseUrl}/pdfs/${pdfFile.filename}`;
     imageFiles.forEach((file) => {
